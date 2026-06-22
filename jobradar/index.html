@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JobRadar · 职雷 — 大学生智能求职平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+</head>
+<body>
+
+<!-- ════════ 登录 / 注册 弹窗 ════════ -->
+<div id="auth-modal" class="auth-modal" style="display:none">
+  <div class="auth-backdrop" data-auth-close></div>
+  <div class="auth-card">
+    <button class="auth-close" data-auth-close title="关闭"><i class="ti ti-x"></i></button>
+    <div class="auth-brand"><div class="nav-logo"><i class="ti ti-radar"></i></div><div class="auth-brand-name">JobRadar</div></div>
+    <div class="auth-title" id="auth-title">登录</div>
+    <div class="auth-sub" id="auth-sub">登录后即可管理你的投递、简历与资料</div>
+    <div class="auth-field"><label>用户名</label><input type="text" id="auth-username" autocomplete="username" placeholder="3-32 位"></div>
+    <div class="auth-field"><label>密码</label><input type="password" id="auth-password" autocomplete="current-password" placeholder="至少 6 位"></div>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="btn primary auth-submit" id="auth-submit">登录</button>
+    <div class="auth-switch">
+      <span id="auth-switch-text">还没有账号？</span>
+      <a href="#" id="auth-switch-btn">注册一个</a>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- ── 侧边导航 ── -->
+  <nav class="nav" aria-label="主导航">
+    <div class="nav-brand">
+      <div class="nav-logo"><i class="ti ti-radar"></i></div>
+      <div>
+        <div class="nav-title">JobRadar</div>
+        <div class="nav-sub">职雷 · 智能求职</div>
+      </div>
+    </div>
+    <div class="nav-menu" role="menu">
+      <div class="nav-item active" data-page="dashboard"   role="menuitem"><i class="ti ti-layout-dashboard"></i>总览</div>
+      <div class="nav-item"        data-page="applications" role="menuitem"><i class="ti ti-send"></i>我的投递</div>
+      <div class="nav-item"        data-page="jobdb"        role="menuitem"><i class="ti ti-database"></i>校招信息库</div>
+      <div class="nav-item"        data-page="addjob"       role="menuitem"><i class="ti ti-plus"></i>添加岗位</div>
+      <div class="nav-item"        data-page="resume"       role="menuitem"><i class="ti ti-file-cv"></i>简历管理</div>
+      <div class="nav-item"        data-page="autofill"     role="menuitem"><i class="ti ti-forms"></i>自动填充</div>
+      <div class="nav-item"        data-page="optimize"     role="menuitem"><i class="ti ti-sparkles"></i>简历优化</div>
+      <div class="nav-item"        data-page="aimatch"      role="menuitem"><i class="ti ti-cpu"></i>AI 匹配</div>
+      <div class="nav-item"        data-page="review"       role="menuitem"><i class="ti ti-chart-pie"></i>投递复盘</div>
+      <div class="nav-item"        data-page="benefits"     role="menuitem"><i class="ti ti-gift"></i>免费福利</div>
+      <div class="nav-item"        data-page="pricing"      role="menuitem"><i class="ti ti-crown"></i>定价</div>
+    </div>
+    <div class="nav-footer">
+      <div class="nav-item" data-page="profile" role="menuitem"><i class="ti ti-user-circle"></i>个人中心</div>
+      <div class="nav-account" id="nav-account"></div>
+    </div>
+  </nav>
+
+  <!-- ── 主内容区 ── -->
+  <div class="main">
+
+    <!-- ════════ 总览 ════════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="topbar">
+        <div class="topbar-title">总览 <span class="badge b-blue">今日新增 19 家</span></div>
+        <button class="btn"><i class="ti ti-bell"></i>截止提醒</button>
+        <button class="btn primary" data-goto="addjob"><i class="ti ti-plus"></i>添加岗位</button>
+      </div>
+      <div class="content">
+        <div class="stat-grid" id="dash-stats"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="section-title">投递漏斗</div>
+            <div class="funnel" id="dash-funnel"></div>
+          </div>
+          <div class="card">
+            <div class="section-title"><i class="ti ti-alarm" style="color:#E02424;margin-right:4px"></i>即将截止</div>
+            <div class="deadline-list" id="dash-deadlines"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">今日推荐岗位</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>公司</th><th>岗位</th><th>城市</th><th>截止</th><th>匹配度</th><th>操作</th></tr></thead>
+              <tbody id="dash-recommend"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 我的投递 ════════ -->
+    <div id="page-applications" class="page">
+      <div class="topbar">
+        <div class="topbar-title">我的投递</div>
+        <button class="btn primary" data-goto="addjob"><i class="ti ti-plus"></i>添加岗位</button>
+      </div>
+      <div class="filter-row" role="tablist">
+        <div class="tab on"  data-status="全部"   role="tab">全部   <span class="cnt" id="cnt-全部"></span></div>
+        <div class="tab"     data-status="未投递"  role="tab">未投递 <span class="cnt" id="cnt-未投递"></span></div>
+        <div class="tab"     data-status="已投递"  role="tab">已投递 <span class="cnt" id="cnt-已投递"></span></div>
+        <div class="tab"     data-status="已笔试"  role="tab">已笔试 <span class="cnt" id="cnt-已笔试"></span></div>
+        <div class="tab"     data-status="已面试"  role="tab">已面试 <span class="cnt" id="cnt-已面试"></span></div>
+        <div class="tab"     data-status="已挂"    role="tab">已挂   <span class="cnt" id="cnt-已挂"></span></div>
+        <div class="tab"     data-status="已OC"    role="tab">已 OC  <span class="cnt" id="cnt-已OC"></span></div>
+      </div>
+      <div class="content" style="padding-top:0">
+        <div class="card" style="padding:0;margin-top:16px">
+          <div class="table-wrap">
+            <table id="app-table">
+              <colgroup>
+                <col style="width:110px"><col style="width:140px"><col style="width:80px">
+                <col style="width:68px"><col style="width:100px"><col style="width:96px">
+                <col style="width:100px"><col style="width:72px">
+              </colgroup>
+              <thead>
+                <tr><th>公司</th><th>岗位</th><th>类型</th><th>城市</th><th>截止日期</th><th>当前状态</th><th>最后更新</th><th>操作</th></tr>
+              </thead>
+              <tbody id="app-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 状态编辑抽屉 -->
+      <div class="overlay hidden" id="status-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="drawer">
+          <div class="drawer-head">
+            <button class="icon-btn" id="modal-back" aria-label="返回"><i class="ti ti-arrow-left"></i></button>
+            <h3 id="modal-title">更新投递状态</h3>
+            <button class="icon-btn" id="modal-close" aria-label="关闭"><i class="ti ti-x"></i></button>
+          </div>
+          <div class="drawer-body">
+            <div id="modal-co-info" class="modal-co-info">
+              <div id="modal-avatar" class="modal-avatar"></div>
+              <div>
+                <div id="modal-co" style="font-size:14px;font-weight:500"></div>
+                <div id="modal-pos" style="font-size:12px;color:var(--c-text-2)"></div>
+              </div>
+              <div style="margin-left:auto;text-align:right">
+                <div style="font-size:11px;color:var(--c-text-2)">截止</div>
+                <div id="modal-deadline" style="font-size:13px;font-weight:500"></div>
+              </div>
+            </div>
+
+            <div class="pipeline" id="pipeline" role="group" aria-label="投递流程"></div>
+
+            <div class="field-label">选择当前状态</div>
+            <div class="status-grid" id="status-grid"></div>
+
+            <div id="detail-panels"></div>
+
+            <div class="divider"></div>
+            <div class="field-label" style="margin-top:0">投递记录</div>
+            <div class="timeline" id="timeline"></div>
+
+            <div style="display:flex;gap:8px;margin-top:20px">
+              <button class="btn" id="modal-cancel" style="flex:1">取消</button>
+              <button class="btn primary" id="modal-save" style="flex:2"><i class="ti ti-device-floppy"></i>保存更新</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 校招信息库 ════════ -->
+    <div id="page-jobdb" class="page">
+      <div class="content">
+        <!-- Hero -->
+        <div class="jdb-hero">
+          <div class="jdb-hero-label">校招信息库</div>
+          <div class="jdb-hero-row">
+            <div>
+              <h1 class="jdb-hero-title">每天更新校招岗位，不用再到处找信息</h1>
+              <p class="jdb-hero-sub">覆盖校招、实习、补录、提前批和常用公司入口，筛选后可以一键加入我的投递继续跟进。</p>
+            </div>
+            <button class="btn primary jdb-hero-btn" data-goto="addjob"><i class="ti ti-plus"></i>手动添加岗位</button>
+          </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">已收录公司</div><div class="stat-val blue"   id="jdb-stat-co">0</div><div class="stat-note">持续收录中</div></div>
+          <div class="stat-card"><div class="stat-label">校招信息</div><div class="stat-val purple" id="jdb-stat-total">0</div><div class="stat-note">覆盖多届招聘信息</div></div>
+          <div class="stat-card"><div class="stat-label">可投岗位</div><div class="stat-val green"  id="jdb-stat-open">0</div><div class="stat-note">选中后加入我的投递</div></div>
+          <div class="stat-card"><div class="stat-label">今日新增</div><div class="stat-val orange" id="jdb-stat-today">0</div><div class="stat-note">今日新增已入库</div></div>
+        </div>
+
+        <!-- Feature strip -->
+        <div class="jdb-strip">
+          <div class="jdb-strip-lead"><i class="ti ti-sparkles"></i><div><b>不用到处翻官网和群消息，JobRadar 每日帮你整理最新校招机会</b><span>岗位信息持续更新，筛选、收藏和加入投递更顺手。</span></div></div>
+          <div class="jdb-strip-feats">
+            <div class="jdb-feat"><i class="ti ti-refresh"></i><div><b>每日更新</b><span>当日新增抢先看</span></div></div>
+            <div class="jdb-feat"><i class="ti ti-briefcase"></i><div><b>海量岗位</b><span>覆盖企业广</span></div></div>
+            <div class="jdb-feat"><i class="ti ti-filter"></i><div><b>精准筛选</b><span>快速定位机会</span></div></div>
+            <div class="jdb-feat"><i class="ti ti-circle-plus"></i><div><b>一键加入投递</b><span>高效管理投递</span></div></div>
+          </div>
+        </div>
+
+        <!-- Filter card -->
+        <div class="card jdb-filter-card">
+          <div class="jdb-tabs-row">
+            <div class="jdb-count-info" id="jdb-count-info">当前可查看 0 条招聘信息</div>
+            <div class="jdb-quick">
+              <span class="jdb-quick-label">快捷关注</span>
+              <button class="jdb-chip" data-chip="apply"><i class="ti ti-send"></i>可投递</button>
+              <button class="jdb-chip" data-chip="urgent"><i class="ti ti-clock"></i>近7天截止</button>
+              <button class="jdb-chip" data-chip="soe"><i class="ti ti-building-bank"></i>央国企</button>
+              <button class="jdb-chip" data-chip="inst"><i class="ti ti-flask"></i>研究所</button>
+              <button class="jdb-chip" data-chip="foreign"><i class="ti ti-world"></i>外企</button>
+            </div>
+            <div class="jdb-spacer"></div>
+            <div class="jdb-view-toggle">
+              <button class="jdb-view active" data-view="card"><i class="ti ti-layout-grid"></i>卡片视图</button>
+              <button class="jdb-view" data-view="table"><i class="ti ti-table"></i>表格视图</button>
+            </div>
+            <button class="btn sm jdb-reset" id="jdb-reset"><i class="ti ti-refresh"></i>重置筛选</button>
+          </div>
+          <div class="jdb-search-row">
+            <div class="search-box"><i class="ti ti-search"></i><input type="text" id="jobdb-search" placeholder="搜索公司、岗位、行业、城市、备注关键词"></div>
+            <select class="filter-select" id="jobdb-f-recruit"><option value="">全部类型</option></select>
+            <select class="filter-select" id="jobdb-f-industry"><option value="">全部行业</option></select>
+            <select class="filter-select" id="jobdb-f-city"><option value="">城市</option></select>
+          </div>
+        </div>
+
+        <!-- Card grid view -->
+        <div class="job-grid" id="jobdb-cards"></div>
+
+        <!-- Table view -->
+        <div class="card jdb-table-card" id="jobdb-table" style="display:none;padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>公司</th><th>类型</th><th>行业</th><th>招聘类型</th><th>对象</th><th>城市</th><th>岗位</th><th>截止</th><th>操作</th></tr></thead>
+              <tbody id="jobdb-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pagination" id="jobdb-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ════════ 添加岗位 ════════ -->
+    <div id="page-addjob" class="page">
+      <div class="topbar">
+        <div class="topbar-title">添加岗位</div>
+      </div>
+      <div class="content">
+        <div class="two-col">
+          <div class="card">
+            <div class="section-title"><i class="ti ti-edit" style="margin-right:6px"></i>手动填写</div>
+            <div class="form-stack">
+              <div class="field"><label>公司名称 <span class="req">*</span></label><input type="text" id="addjob-co" placeholder="如：字节跳动"></div>
+              <div class="field"><label>岗位名称 <span class="req">*</span></label><input type="text" id="addjob-pos" placeholder="如：后端开发工程师"></div>
+              <div class="form-row">
+                <div class="field"><label>招聘类型</label><select id="addjob-type"><option>秋招</option><option>春招</option><option>实习</option><option>秋招提前批</option></select></div>
+                <div class="field"><label>招聘对象</label><select id="addjob-target"><option>2027届</option><option>2026届</option><option>2025届</option></select></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>工作城市</label><input type="text" id="addjob-city" placeholder="如：上海"></div>
+                <div class="field"><label>投递截止</label><input type="date" id="addjob-deadline"></div>
+              </div>
+              <div class="field"><label>投递链接</label><input type="url" id="addjob-link" placeholder="https://..."></div>
+              <div class="field"><label>初始状态</label><select id="addjob-status"><option>未投递</option><option>已投递</option></select></div>
+              <div class="field"><label>备注</label><input type="text" id="addjob-note" placeholder="内推码、HR 联系方式等"></div>
+              <button class="btn primary full" id="addjob-save"><i class="ti ti-check"></i>保存到我的投递</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="section-title"><i class="ti ti-link" style="margin-right:6px"></i>粘贴 JD 链接解析</div>
+              <div style="display:flex;gap:8px;margin-bottom:10px">
+                <input type="url" class="flex-input" placeholder="粘贴招聘页面链接，自动提取信息...">
+                <button class="btn primary"><i class="ti ti-wand"></i>解析</button>
+              </div>
+              <p class="hint">支持：牛客、实习僧、校招通、企业官网等</p>
+            </div>
+            <div class="card">
+              <div class="section-title"><i class="ti ti-bell" style="margin-right:6px"></i>截止提醒</div>
+              <div class="check-list">
+                <label><input type="checkbox" checked> 截止前 3 天提醒</label>
+                <label><input type="checkbox"> 截止前 7 天提醒</label>
+                <label><input type="checkbox"> 截止当天早上提醒</label>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title"><i class="ti ti-sparkles" style="color:#1A56DB;margin-right:6px"></i>AI 快速匹配</div>
+              <p class="hint" style="margin-bottom:10px">添加后可一键检测此岗位与你简历的匹配度</p>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked> 添加后自动分析简历匹配度</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 简历管理（在线编辑器）════════ -->
+    <div id="page-resume" class="page">
+      <div class="topbar">
+        <div class="topbar-title">简历编辑器</div>
+        <div class="re-toolbar">
+          <button class="re-tbtn" id="re-undo" title="撤销 (Ctrl+Z)"><i class="ti ti-arrow-back-up"></i></button>
+          <button class="re-tbtn" id="re-redo" title="重做 (Ctrl+Y)"><i class="ti ti-arrow-forward-up"></i></button>
+          <span class="re-save-status" id="re-save-status">已保存</span>
+          <button class="btn sm" id="re-save"><i class="ti ti-device-floppy"></i>保存</button>
+          <button class="btn primary sm" id="re-export"><i class="ti ti-file-download"></i>导出 PDF</button>
+        </div>
+      </div>
+      <div class="content re-content">
+        <aside class="re-panel">
+          <div class="re-group">
+            <div class="re-group-title">模板</div>
+            <div class="re-tpls">
+              <button class="re-tpl active" data-tpl="latex">LaTeX</button>
+              <button class="re-tpl" data-tpl="academic">学术</button>
+              <button class="re-tpl" data-tpl="awesome">Awesome</button>
+              <button class="re-tpl" data-tpl="classic">经典</button>
+              <button class="re-tpl" data-tpl="modern">现代</button>
+              <button class="re-tpl" data-tpl="minimal">极简</button>
+              <button class="re-tpl" data-tpl="ats">ATS 友好</button>
+              <button class="re-tpl" data-tpl="timeline">时间线</button>
+              <button class="re-tpl" data-tpl="nordic">北欧</button>
+            </div>
+          </div>
+          <div class="re-group">
+            <div class="re-group-title">主题</div>
+            <label class="re-ctrl"><span>主题色</span><input type="color" id="re-accent" value="#1A56DB"></label>
+            <label class="re-ctrl"><span>字体</span>
+              <select id="re-font"><option value="sans">无衬线</option><option value="serif">衬线</option><option value="mono">等宽</option></select></label>
+            <label class="re-ctrl"><span>间距</span>
+              <select id="re-spacing"><option value="compact">紧凑</option><option value="normal">标准</option><option value="relaxed">宽松</option></select></label>
+            <label class="re-ctrl"><span>页边距</span>
+              <select id="re-margin"><option value="narrow">窄</option><option value="normal">标准</option><option value="wide">宽</option></select></label>
+          </div>
+          <div class="re-group">
+            <div class="re-group-title">照片</div>
+            <label class="re-check"><input type="checkbox" id="re-showphoto" checked><span>在简历右上角显示照片</span></label>
+          </div>
+          <div class="re-group">
+            <div class="re-group-title">添加板块</div>
+            <div class="re-addsecs">
+              <button class="re-addsec" data-type="experience">＋经历</button>
+              <button class="re-addsec" data-type="projects">＋项目</button>
+              <button class="re-addsec" data-type="education">＋教育</button>
+              <button class="re-addsec" data-type="skills">＋技能</button>
+              <button class="re-addsec" data-type="summary">＋简介</button>
+              <button class="re-addsec" data-type="custom">＋自定义</button>
+            </div>
+          </div>
+          <div class="re-group">
+            <div class="re-group-title">自动保存间隔</div>
+            <select id="re-autosave" class="re-autosave">
+              <option value="300">0.3 秒</option>
+              <option value="1000" selected>1 秒</option>
+              <option value="3000">3 秒</option>
+              <option value="5000">5 秒</option>
+            </select>
+            <button class="re-reset" id="re-reset"><i class="ti ti-refresh"></i>重置为示例</button>
+          </div>
+        </aside>
+        <div class="re-canvas-wrap">
+          <div class="re-canvas tpl-latex" id="re-canvas"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 自动填充 ════════ -->
+    <div id="page-autofill" class="page">
+      <div class="topbar">
+        <div class="topbar-title">自动填充</div>
+        <button class="btn primary"><i class="ti ti-device-floppy"></i>保存信息</button>
+      </div>
+      <div class="content">
+        <div class="card info-banner">
+          <i class="ti ti-info-circle" style="color:#1A56DB;font-size:18px;flex-shrink:0"></i>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:#1A56DB;margin-bottom:2px">浏览器插件已就绪</div>
+            <div style="font-size:12px;color:var(--c-text-2)">在招聘网站表单页面点击插件图标，即可一键填入以下信息。所有数据仅存储在本地，不上传至服务器。</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">个人基本信息</div>
+          <div class="autofill-form">
+            <div class="form-row"><div class="field"><label>姓名</label><input type="text" id="autofill-name"></div><div class="field"><label>手机号</label><input type="tel" id="autofill-phone"></div></div>
+            <div class="form-row"><div class="field"><label>邮箱</label><input type="email" id="autofill-email"></div><div class="field"><label>性别</label><select id="autofill-gender"><option>男</option><option>女</option></select></div></div>
+            <div class="form-row"><div class="field"><label>学校</label><input type="text" id="autofill-school"></div><div class="field"><label>学历</label><select id="autofill-education"><option>本科</option><option>硕士</option><option>博士</option></select></div></div>
+            <div class="form-row"><div class="field"><label>专业</label><input type="text" id="autofill-major"></div><div class="field"><label>毕业年份</label><select id="autofill-gradyear"><option>2027</option><option>2026</option><option>2025</option></select></div></div>
+            <div class="form-row"><div class="field"><label>GPA</label><input type="text" id="autofill-gpa"></div><div class="field"><label>意向城市</label><input type="text" id="autofill-city"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">支持的招聘平台</div>
+          <div class="tag-row" style="flex-wrap:wrap;gap:8px">
+            <span class="badge b-green"><i class="ti ti-check"></i> 牛客网</span>
+            <span class="badge b-green"><i class="ti ti-check"></i> 实习僧</span>
+            <span class="badge b-green"><i class="ti ti-check"></i> 校招通</span>
+            <span class="badge b-green"><i class="ti ti-check"></i> 应届生求职网</span>
+            <span class="badge b-blue"><i class="ti ti-clock"></i> 华为招聘</span>
+            <span class="badge b-blue"><i class="ti ti-clock"></i> 字节招聘</span>
+            <span class="badge b-gray"><i class="ti ti-plus"></i> 更多适配中</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ AI 匹配 ════════ -->
+    <div id="page-aimatch" class="page">
+      <div class="topbar">
+        <div class="topbar-title">AI 匹配</div>
+        <button class="btn primary" id="aimatch-refresh"><i class="ti ti-refresh"></i>刷新推荐</button>
+      </div>
+      <div class="content">
+        <div class="card" style="margin-bottom:16px">
+          <div class="section-title">我的求职偏好</div>
+          <div class="tag-row" style="flex-wrap:wrap">
+            <span class="badge b-blue">后端开发</span><span class="badge b-blue">算法工程师</span>
+            <span class="badge b-gray">上海</span><span class="badge b-gray">北京</span><span class="badge b-gray">深圳</span>
+            <span class="badge b-green">互联网</span><span class="badge b-green">AI/人工智能</span>
+            <button class="btn sm"><i class="ti ti-edit"></i>编辑偏好</button>
+          </div>
+        </div>
+        <div class="section-title">为你推荐 — 共 <span id="aimatch-count">0</span> 个岗位</div>
+        <div id="aimatch-list"></div>
+      </div>
+    </div>
+
+    <!-- ════════ 简历优化 ════════ -->
+    <div id="page-optimize" class="page">
+      <div class="topbar">
+        <div class="topbar-title">简历优化</div>
+        <button class="btn primary"><i class="ti ti-sparkles"></i>重新分析</button>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="section-title">目标 JD</div>
+          <div style="display:flex;gap:8px">
+            <select class="filter-select" style="flex:1"><option>字节跳动 — 后端开发工程师（秋招 2027届）</option></select>
+            <button class="btn"><i class="ti ti-refresh"></i>换一个</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">AI 分析结果</div>
+          <div class="ai-score-wrap">
+            <div class="ai-score-circle">
+              <div class="score-num">76</div>
+              <div class="score-label">匹配分</div>
+            </div>
+            <div class="ai-suggest-list">
+              <div class="ai-suggest warn"><i class="ti ti-alert-triangle"></i><div><b>关键词缺失</b>：JD 要求"微服务架构"经验，简历中未提及，建议在项目经历中补充。</div></div>
+              <div class="ai-suggest warn"><i class="ti ti-alert-triangle"></i><div><b>量化不足</b>："负责后端开发"表述模糊，建议改为"主导核心模块重构，接口响应时间降低 40%"。</div></div>
+              <div class="ai-suggest ok"><i class="ti ti-check"></i><div><b>技术栈匹配</b>：Java / Spring Boot / MySQL 与 JD 要求高度匹配。</div></div>
+              <div class="ai-suggest ok"><i class="ti ti-check"></i><div><b>学历符合</b>：本科学历满足岗位最低要求，GPA 3.8 有竞争力。</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="ai-chat">
+          <div class="ai-msg">
+            <div class="ai-avatar"><i class="ti ti-cpu"></i></div>
+            <div class="ai-bubble">你好！我已分析完成。你的简历与目标 JD 匹配度为 76 分，主要差距在"微服务经验"和"项目量化描述"两个维度。我可以帮你逐句修改，也可以补全关键词，你想从哪里开始？</div>
+          </div>
+          <div class="ai-input">
+            <input type="text" placeholder="输入你的问题，如：帮我改写第二段实习经历...">
+            <button class="btn primary"><i class="ti ti-send"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 投递复盘 ════════ -->
+    <div id="page-review" class="page">
+      <div class="topbar">
+        <div class="topbar-title">投递复盘</div>
+        <button class="btn"><i class="ti ti-download"></i>导出报告</button>
+      </div>
+      <div class="content">
+        <div class="stat-grid" id="review-stats"></div>
+        <div class="card">
+          <div class="section-title">投递城市分布</div>
+          <div class="bar-chart" id="review-chart"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">AI 复盘建议</div>
+          <div class="ai-suggest-list" id="review-suggestions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 免费福利 ════════ -->
+    <div id="page-benefits" class="page">
+      <div class="topbar">
+        <div class="topbar-title">免费福利</div>
+      </div>
+      <div class="content">
+        <div class="card" style="text-align:center;padding:48px 24px">
+          <i class="ti ti-gift" style="font-size:40px;color:var(--brand);display:block;margin-bottom:14px"></i>
+          <div class="section-title" style="justify-content:center">福利内容建设中</div>
+          <p style="font-size:13px;color:var(--c-text-2);max-width:520px;margin:8px auto 0;line-height:1.7">
+            把你的福利方案（如签到领权益、邀请有礼、限免活动等）发给我，我按真实内容补全这一页。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 定价 ════════ -->
+    <div id="page-pricing" class="page">
+      <div class="topbar">
+        <div class="topbar-title">开通会员 · 解锁全部校招信息</div>
+      </div>
+      <div class="content">
+        <div id="pricing-body"></div>
+      </div>
+    </div>
+
+    <!-- ════════ 个人中心 ════════ -->
+    <div id="page-profile" class="page">
+      <div class="topbar">
+        <div class="topbar-title">个人中心</div>
+        <button class="btn"><i class="ti ti-settings"></i>设置</button>
+      </div>
+      <div class="content">
+        <div class="card" style="display:flex;align-items:center;gap:20px;margin-bottom:16px">
+          <div class="user-avatar" id="profile-avatar">张</div>
+          <div>
+            <div style="font-size:16px;font-weight:500" id="profile-name">张三</div>
+            <div style="font-size:13px;color:var(--c-text-2)" id="profile-sub"></div>
+            <span class="badge b-blue" style="margin-top:6px;display:inline-flex" id="profile-plan">免费版</span>
+          </div>
+          <button class="btn primary" style="margin-left:auto">升级会员</button>
+        </div>
+        <div class="card">
+          <div class="section-title">基本信息</div>
+          <div class="autofill-form">
+            <div class="form-row"><div class="field"><label>姓名</label><input id="profile-f-name"></div><div class="field"><label>邮箱</label><input id="profile-f-email"></div></div>
+            <div class="form-row"><div class="field"><label>学校</label><input id="profile-f-school"></div><div class="field"><label>专业</label><input id="profile-f-major"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

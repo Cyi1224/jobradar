@@ -1,0 +1,41 @@
+# ── 密钥 / 环境变量（绝不提交）──
+.env
+.env.*
+*.pem
+*.key
+secrets/
+
+# ── 依赖 / 构建产物 ──
+node_modules/
+backend/target/
+target/
+dist/
+build/
+
+# ── 数据导出 / 备份（含个人信息，勿提交）──
+*.bak_*
+*.xlsx
+*.xlsx.bak_*
+
+# ── 日志 / 临时 ──
+*.log
+logs/
+tmp/
+_*.mjs
+_*.json
+
+# ── IDE / 系统 ──
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ── Claude Code 会话文件 ──
+.waylog/
+.agents/
+.claude/
+.tmp_*
+
+# ── GitHub AI 建议（非项目源码）──
+.github/modernize/

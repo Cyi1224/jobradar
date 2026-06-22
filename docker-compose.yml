@@ -1,0 +1,52 @@
+# 一键启动：在项目根目录执行  docker compose up --build
+#   MySQL → localhost:3306   后端 → http://localhost:8080   前端 → http://localhost:8123
+# 首次启动后端会把 1.4w 条校招数据灌入 MySQL（约几十秒，仅一次；数据持久化在 mysql-data 卷）。
+#
+# 注意：前端要真正走后端，需把 jobradar/js/config.js 改为
+#   USE_MOCK: false, API_BASE: 'http://localhost:8080/api'
+# （浏览器直连后端，CORS 已在后端 CorsConfig 放行）。详见 DEPLOY.md。
+services:
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-jobradar123}
+      MYSQL_DATABASE: ${DB_NAME:-jobradar}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD:-jobradar123}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME:-jobradar}
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-jobradar123}
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-strong-32byte-random-secret-string}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8123}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  frontend:
+    image: nginx:alpine
+    depends_on:
+      - backend
+    ports:
+      - "8123:80"
+    volumes:
+      - ./jobradar:/usr/share/nginx/html:ro
+
+volumes:
+  mysql-data:

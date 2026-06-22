@@ -1,0 +1,11 @@
+{
+  "name": "jobradar-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "JobRadar 本地一体化服务：前端静态托管 + DeepSeek 代理",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

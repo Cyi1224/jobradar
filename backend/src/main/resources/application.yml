@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  # ── 默认（dev）：H2 内存库，启动即用，重启清空 ──
+  datasource:
+    url: jdbc:h2:mem:jobradar;DB_CLOSE_DELAY=-1;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop      # dev：每次启动重建表
+    show-sql: false
+    properties:
+      hibernate.format_sql: true
+      hibernate.jdbc.batch_size: 200   # 批量灌库（14k 校招数据）
+      hibernate.order_inserts: true
+  h2:
+    console:
+      enabled: true              # http://localhost:8080/h2-console
+      path: /h2-console
+
+# ── JobRadar 自定义开关 ──
+jobradar:
+  # 是否灌入演示用的「我的投递 / 简历 / 个人资料」假数据（生产请关，见 application-prod.yml）。
+  # 校招信息库（jobs）始终会在库为空时灌入，不受此开关影响。
+  seed-demo: true
+  cors:
+    allowed-origins: "*"        # dev 放行全部；生产收窄，见 application-prod.yml
+  payment:
+    demo-mode: true             # dev：允许「点击即开通」便于联调；生产为 false（见 application-prod.yml）
+
+# ── 上线：用 prod profile 切到 MySQL（持久化、不灌演示数据），见 application-prod.yml ──
+#   构建：mvn clean package -DskipTests
+#   运行：java -jar app.jar --spring.profiles.active=prod
+#   连接参数走环境变量：DB_HOST / DB_PORT / DB_NAME / DB_USER / DB_PASSWORD
