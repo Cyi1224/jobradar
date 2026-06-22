@@ -23,6 +23,8 @@ logs/
 tmp/
 _*.mjs
 _*.json
+stdout.txt
+stderr.txt
 
 # ── IDE / 系统 ──
 .idea/
