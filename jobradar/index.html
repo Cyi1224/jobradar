@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1A56DB" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>JobRadar · 职雷 — 大学生智能求职平台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,7 +20,7 @@
   <div class="auth-backdrop" data-auth-close></div>
   <div class="auth-card">
     <button class="auth-close" data-auth-close title="关闭"><i class="ti ti-x"></i></button>
-    <div class="auth-brand"><div class="nav-logo"><i class="ti ti-radar"></i></div><div class="auth-brand-name">JobRadar</div></div>
+    <div class="auth-brand"><div class="nav-logo"><svg width="20" height="20" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="14" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/><circle cx="17" cy="17" r="9.5" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><circle cx="17" cy="17" r="5" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.40)" stroke-width="1"/><path d="M17,17 L17,3 A14,14 0 0,1 29.1,10 Z" fill="rgba(255,255,255,0.18)"/><circle cx="24" cy="10.5" r="1.2" fill="#fff"/><circle cx="10" cy="23" r="0.9" fill="#f97316"/><circle cx="17" cy="17" r="1" fill="#fff"/></svg></div><div class="auth-brand-name">职雷 JobRadar</div></div>
     <div class="auth-title" id="auth-title">登录</div>
     <div class="auth-sub" id="auth-sub">登录后即可管理你的投递、简历与资料</div>
     <div class="auth-field"><label>用户名</label><input type="text" id="auth-username" autocomplete="username" placeholder="3-32 位"></div>
@@ -36,16 +39,31 @@
   <!-- ── 侧边导航 ── -->
   <nav class="nav" aria-label="主导航">
     <div class="nav-brand">
-      <div class="nav-logo"><i class="ti ti-radar"></i></div>
+      <div class="nav-logo">
+        <svg width="22" height="22" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+          <circle cx="17" cy="17" r="14" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+          <circle cx="17" cy="17" r="9.5" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+          <circle cx="17" cy="17" r="5" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.40)" stroke-width="1"/>
+          <line x1="3" y1="17" x2="31" y2="17" stroke="rgba(255,255,255,0.30)" stroke-width=".8"/>
+          <line x1="17" y1="3" x2="17" y2="31" stroke="rgba(255,255,255,0.30)" stroke-width=".8"/>
+          <path d="M17,17 L17,3 A14,14 0 0,1 29.1,10 Z" fill="rgba(255,255,255,0.18)"/>
+          <circle cx="24" cy="10.5" r="2.2" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="24" cy="10.5" r="1.2" fill="#fff"/>
+          <circle cx="10" cy="23" r="1.6" fill="rgba(249,115,22,0.7)"/>
+          <circle cx="10" cy="23" r="0.9" fill="#f97316"/>
+          <circle cx="17" cy="17" r="1.8" fill="rgba(255,255,255,0.6)"/>
+          <circle cx="17" cy="17" r="1" fill="#fff"/>
+        </svg>
+      </div>
       <div>
-        <div class="nav-title">JobRadar</div>
-        <div class="nav-sub">职雷 · 智能求职</div>
+        <div class="nav-title">职雷</div>
+        <div class="nav-sub">JOB RADAR · 智能求职</div>
       </div>
     </div>
     <div class="nav-menu" role="menu">
-      <div class="nav-item active" data-page="dashboard"   role="menuitem"><i class="ti ti-layout-dashboard"></i>总览</div>
+      <div class="nav-item active" data-page="jobdb"        role="menuitem"><i class="ti ti-database"></i>校招信息库</div>
+      <div class="nav-item"        data-page="dashboard"    role="menuitem"><i class="ti ti-layout-dashboard"></i>总览</div>
       <div class="nav-item"        data-page="applications" role="menuitem"><i class="ti ti-send"></i>我的投递</div>
-      <div class="nav-item"        data-page="jobdb"        role="menuitem"><i class="ti ti-database"></i>校招信息库</div>
       <div class="nav-item"        data-page="addjob"       role="menuitem"><i class="ti ti-plus"></i>添加岗位</div>
       <div class="nav-item"        data-page="resume"       role="menuitem"><i class="ti ti-file-cv"></i>简历管理</div>
       <div class="nav-item"        data-page="autofill"     role="menuitem"><i class="ti ti-forms"></i>自动填充</div>
@@ -65,7 +83,7 @@
   <div class="main">
 
     <!-- ════════ 总览 ════════ -->
-    <div id="page-dashboard" class="page active">
+    <div id="page-dashboard" class="page">
       <div class="topbar">
         <div class="topbar-title">总览 <span class="badge b-blue">今日新增 19 家</span></div>
         <button class="btn"><i class="ti ti-bell"></i>截止提醒</button>
@@ -170,14 +188,29 @@
     </div>
 
     <!-- ════════ 校招信息库 ════════ -->
-    <div id="page-jobdb" class="page">
+    <div id="page-jobdb" class="page active">
       <div class="content">
         <!-- Hero -->
         <div class="jdb-hero">
-          <div class="jdb-hero-label">校招信息库</div>
+          <!-- 雷达装饰 SVG（右侧，透明叠加） -->
+          <svg class="jdb-hero-radar" viewBox="0 0 440 440" fill="none" aria-hidden="true">
+            <circle cx="220" cy="220" r="200" stroke="#2563eb" stroke-width="1.2"/>
+            <circle cx="220" cy="220" r="145" stroke="#2563eb" stroke-width="1.2"/>
+            <circle cx="220" cy="220" r="90"  stroke="#2563eb" stroke-width="1.2"/>
+            <circle cx="220" cy="220" r="42"  stroke="#2563eb" stroke-width="1.2"/>
+            <line x1="20"  y1="220" x2="420" y2="220" stroke="#2563eb" stroke-width=".8"/>
+            <line x1="220" y1="20"  x2="220" y2="420" stroke="#2563eb" stroke-width=".8"/>
+            <line x1="78"  y1="78"  x2="362" y2="362" stroke="#2563eb" stroke-width=".5"/>
+            <line x1="362" y1="78"  x2="78"  y2="362" stroke="#2563eb" stroke-width=".5"/>
+            <path d="M220,220 L220,20 A200,200 0 0,1 393,110 Z" fill="#2563eb" fill-opacity=".06"/>
+          </svg>
+          <div class="jdb-hero-tag">
+            <span class="jdb-hero-tag-dot"></span>
+            <span id="jdb-hero-tag-count">每天自动更新</span>
+          </div>
           <div class="jdb-hero-row">
             <div>
-              <h1 class="jdb-hero-title">每天更新校招岗位，不用再到处找信息</h1>
+              <h1 class="jdb-hero-title">每天更新校招岗位，不用再到处<span class="jdb-hero-accent">找信息</span></h1>
               <p class="jdb-hero-sub">覆盖校招、实习、补录、提前批和常用公司入口，筛选后可以一键加入我的投递继续跟进。</p>
             </div>
             <button class="btn primary jdb-hero-btn" data-goto="addjob"><i class="ti ti-plus"></i>手动添加岗位</button>
@@ -188,8 +221,8 @@
         <div class="stat-grid">
           <div class="stat-card"><div class="stat-label">已收录公司</div><div class="stat-val blue"   id="jdb-stat-co">0</div><div class="stat-note">持续收录中</div></div>
           <div class="stat-card"><div class="stat-label">校招信息</div><div class="stat-val purple" id="jdb-stat-total">0</div><div class="stat-note">覆盖多届招聘信息</div></div>
-          <div class="stat-card"><div class="stat-label">可投岗位</div><div class="stat-val green"  id="jdb-stat-open">0</div><div class="stat-note">选中后加入我的投递</div></div>
-          <div class="stat-card"><div class="stat-label">今日新增</div><div class="stat-val orange" id="jdb-stat-today">0</div><div class="stat-note">今日新增已入库</div></div>
+          <div class="stat-card"><div class="stat-label">可投岗位</div><div class="stat-val green"  id="jdb-stat-open">0</div><div class="stat-note" id="jdb-stat-open-note">选中后加入我的投递</div></div>
+          <div class="stat-card clickable" id="jdb-stat-today-card" title="点击筛选今日新增岗位"><div class="stat-label">今日新增 <i class="ti ti-filter" style="font-size:11px;opacity:.6"></i></div><div class="stat-val orange" id="jdb-stat-today">0</div><div class="stat-note" id="jdb-stat-today-note">今日新增已入库</div></div>
         </div>
 
         <!-- Feature strip -->
@@ -228,6 +261,24 @@
             <select class="filter-select" id="jobdb-f-industry"><option value="">全部行业</option></select>
             <select class="filter-select" id="jobdb-f-city"><option value="">城市</option></select>
           </div>
+        </div>
+
+        <!-- 顶部分页栏 -->
+        <div id="jobdb-top-pager"></div>
+
+        <!-- 今日新增筛选提示横幅（JS 控制显隐）-->
+        <div class="today-banner" id="today-banner" style="display:none">
+          <div class="today-banner-left">
+            <span class="today-banner-dot"></span>
+            <i class="ti ti-sparkles"></i>
+            <div>
+              <strong>正在查看今日新增岗位</strong>
+              <span id="today-banner-sub">今日共收录 <b id="today-banner-count">0</b> 个新岗位，以下为完整列表</span>
+            </div>
+          </div>
+          <button class="today-banner-exit" id="today-banner-exit">
+            <i class="ti ti-x"></i>退出今日新增
+          </button>
         </div>
 
         <!-- Card grid view -->

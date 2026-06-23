@@ -37,3 +37,5 @@ jobradar:
   # 会员只能由真实支付回调（微信/支付宝/Stripe 验签成功）授予。
   payment:
     demo-mode: false
+  # 生产必须通过环境变量 JOBRADAR_SYNC_TOKEN 设置强随机串（≥32 字符）
+  sync-token: ${JOBRADAR_SYNC_TOKEN:please-set-JOBRADAR_SYNC_TOKEN-in-production}

@@ -30,6 +30,8 @@ jobradar:
     allowed-origins: "*"        # dev 放行全部；生产收窄，见 application-prod.yml
   payment:
     demo-mode: true             # dev：允许「点击即开通」便于联调；生产为 false（见 application-prod.yml）
+  # 每日同步脚本 POST /api/jobs/sync 所需的鉴权 token，与 givemeoc_sync.py 的 JOBRADAR_SYNC_TOKEN 保持一致
+  sync-token: changeme          # 生产请改为强随机串，用环境变量 JOBRADAR_SYNC_TOKEN 覆盖（见 application-prod.yml）
 
 # ── 上线：用 prod profile 切到 MySQL（持久化、不灌演示数据），见 application-prod.yml ──
 #   构建：mvn clean package -DskipTests

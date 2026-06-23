@@ -1,9 +1,11 @@
 package com.jobradar.service;
 
 import com.jobradar.dto.JobPageDTO;
+import com.jobradar.dto.JobSyncReq;
 import com.jobradar.entity.Job;
 import com.jobradar.repository.JobRepository;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -33,8 +35,8 @@ public class JobService {
      *  免费版仅放行前 FREE_MAX_PAGES 页；unlimited=true（会员）不限页。 */
     public JobPageDTO search(String q, String recruitType, String industry, String city,
                              boolean apply, boolean urgent, boolean soe, boolean inst, boolean foreign,
-                             int page, int size, boolean unlimited) {
-        Specification<Job> spec = build(q, recruitType, industry, city, apply, urgent, soe, inst, foreign);
+                             String updatedAt, int page, int size, boolean unlimited) {
+        Specification<Job> spec = build(q, recruitType, industry, city, apply, urgent, soe, inst, foreign, updatedAt);
         Sort sort = Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.asc("id"));
         Page<Job> p = repo.findAll(spec, PageRequest.of(Math.max(0, page), clampSize(size), sort));
 
@@ -53,7 +55,8 @@ public class JobService {
     }
 
     private Specification<Job> build(String q, String recruitType, String industry, String city,
-                                     boolean apply, boolean urgent, boolean soe, boolean inst, boolean foreign) {
+                                     boolean apply, boolean urgent, boolean soe, boolean inst, boolean foreign,
+                                     String updatedAt) {
         return (root, query, cb) -> {
             List<Predicate> ps = new ArrayList<>();
             if (StringUtils.hasText(q)) {
@@ -84,20 +87,52 @@ public class JobService {
                 String plus7 = LocalDate.now().plusDays(7).toString();
                 ps.add(cb.between(root.get("deadline"), today, plus7));
             }
+            if (StringUtils.hasText(updatedAt)) ps.add(cb.equal(root.get("updatedAt"), updatedAt));
             return cb.and(ps.toArray(new Predicate[0]));
         };
     }
 
+    /** 批量新增：只插入不存在的校招条目，已有记录原样保留（每日同步脚本调用）。 */
+    @Transactional
+    public Map<String, Integer> insertNewJobs(List<JobSyncReq> dtos) {
+        int inserted = 0, skipped = 0;
+        for (JobSyncReq dto : dtos) {
+            boolean exists = repo.findByBizKey(
+                    dto.co(), dto.positions(), dto.recruitType(), dto.city(), dto.deadline()
+            ).isPresent();
+            if (exists) {
+                skipped++;
+            } else {
+                Job job = new Job();
+                applyDto(job, dto);
+                repo.save(job);
+                inserted++;
+            }
+        }
+        return Map.of("inserted", inserted, "skipped", skipped);
+    }
+
+    private void applyDto(Job job, JobSyncReq dto) {
+        job.setCo(dto.co());           job.setCoType(dto.coType());
+        job.setIndustry(dto.industry()); job.setRecruitType(dto.recruitType());
+        job.setTarget(dto.target());   job.setCity(dto.city());
+        job.setPositions(dto.positions()); job.setUpdatedAt(dto.updatedAt());
+        job.setDeadline(dto.deadline()); job.setApplyUrl(dto.applyUrl());
+        job.setAnnounceUrl(dto.announceUrl()); job.setNote(dto.note());
+    }
+
     /** 统计卡 + 下拉选项（全局聚合，与当前筛选无关）。 */
     public Map<String, Object> stats() {
-        String today = repo.maxUpdatedAt();
-        long todayCount = (today == null) ? 0 : repo.countByUpdatedAt(today);
+        String latestUpdate = repo.maxUpdatedAt();
+        long todayCount = (latestUpdate == null) ? 0 : repo.countByUpdatedAt(latestUpdate);
+        String todayStr = LocalDate.now().toString();
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("companies", repo.countDistinctCo());
         out.put("total", repo.count());
-        out.put("open", repo.countOpen());
+        out.put("open", repo.countOpen(todayStr));
+        out.put("expired", repo.countExpired(todayStr));
         out.put("today", todayCount);
-        out.put("todayDate", today == null ? "" : today);
+        out.put("todayDate", latestUpdate == null ? "" : latestUpdate);
         out.put("recruitTypes", repo.distinctRecruitTypes());
         out.put("industries", repo.distinctIndustries());
         return out;

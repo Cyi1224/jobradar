@@ -60,6 +60,7 @@ function jobMatch(j, f) {
   if (f.soe && j.coType !== '央国企') return false;
   if (f.foreign && j.coType !== '外企') return false;
   if (f.inst && !(/研究/.test(j.industry || '') || /研究院|研究所/.test(j.co || '') || j.coType === '事业单位')) return false;
+  if (f.updatedAt && j.updatedAt !== f.updatedAt) return false;
   return true;
 }
 

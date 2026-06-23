@@ -22,6 +22,7 @@ const STATIC_DIR = path.join(__dirname, 'jobradar');
 const DEEPSEEK_KEY = process.env.DEEPSEEK_API_KEY || '';
 const DEEPSEEK_HOST = process.env.DEEPSEEK_HOST || 'api.deepseek.com';
 const LLM_PREFIX = '/api/llm'; // 前端 BASE_URL = '/api/llm/v1'
+const BACKEND_PORT = Number(process.env.BACKEND_PORT) || 8090; // Spring Boot
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -45,8 +46,35 @@ const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
 
   if (req.url.startsWith(LLM_PREFIX + '/')) return proxyLlm(req, res);
+  if (req.url.startsWith('/api/')) return proxyBackend(req, res);
   return serveStatic(req, res);
 });
+
+/* ── Spring Boot 后端代理 ── */
+function proxyBackend(req, res) {
+  const chunks = [];
+  req.on('data', (c) => chunks.push(c));
+  req.on('end', () => {
+    const body = Buffer.concat(chunks);
+    const opts = {
+      hostname: '127.0.0.1',
+      port: BACKEND_PORT,
+      path: req.url,
+      method: req.method,
+      headers: { ...req.headers, host: `127.0.0.1:${BACKEND_PORT}` },
+    };
+    const up = http.request(opts, (upRes) => {
+      res.writeHead(upRes.statusCode || 502, upRes.headers);
+      upRes.pipe(res);
+    });
+    up.on('error', () => {
+      res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ message: '后端未启动，请先运行 Spring Boot（端口 ' + BACKEND_PORT + '）', status: 502 }));
+    });
+    if (body.length) up.write(body);
+    up.end();
+  });
+}
 
 /* ── DeepSeek 代理 ── */
 function proxyLlm(req, res) {
