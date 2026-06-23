@@ -23,6 +23,8 @@ build/
 *.log
 logs/
 tmp/
+tmp_*
+.tmp_*
 _*.mjs
 _*.json
 stdout.txt
