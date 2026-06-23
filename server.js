@@ -6,9 +6,12 @@
  *   · POST /api/llm/v1/chat/completions → 转发到 DeepSeek，服务端注入密钥
  * 这样密钥不落前端、且同源无 CORS 问题。
  *
- * 启动（密钥从环境变量读取，不写进源码）：
- *   DEEPSEEK_API_KEY=sk-xxx  PORT=8123  node server.js
+ * 启动方式（三选一）：
+ *   1) 设置环境变量：DEEPSEEK_API_KEY=sk-xxx  PORT=8123  node server.js
+ *   2) 本项目根目录 .env 文件（配合 dotenv 自动读取，推荐）
+ *   3) Docker Compose 自动加载 .env（见 docker-compose.yml）
  */
+require('dotenv').config();
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
