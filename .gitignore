@@ -6,6 +6,7 @@
 *.pem
 *.key
 secrets/
+ssl/
 
 # ── 依赖 / 构建产物 ──
 node_modules/
