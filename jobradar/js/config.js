@@ -9,8 +9,8 @@
  * 并把 API_BASE 指向后端地址，整个前端无需改动其它代码。
  */
 export const CONFIG = {
-  USE_MOCK: true,
-  API_BASE: 'http://localhost:8080/api',
+  USE_MOCK: false,
+  API_BASE: '/api',
 
   /**
    * ── 大模型直连（OpenAI 兼容接口）──
