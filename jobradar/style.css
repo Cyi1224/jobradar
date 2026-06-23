@@ -47,8 +47,9 @@
   --glow-brand: 0 8px 24px -6px rgba(26, 86, 219, 0.40);
 
   /* 字体 */
-  --font-display: 'Sora', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-  --font-body: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Sora 已移除（Google Fonts 在中国无法访问），直接使用系统字体 */
+  --font-display: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body:    'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --nav-w:   232px;
   --top-h:    60px;
