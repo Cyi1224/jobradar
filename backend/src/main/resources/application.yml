@@ -2,15 +2,15 @@ server:
   port: 8080
 
 spring:
-  # ── 默认（dev）：H2 内存库，启动即用，重启清空 ──
+  # ── 默认（dev）：H2 文件库，重启数据不丢，文件写在 backend/data/ 目录 ──
   datasource:
-    url: jdbc:h2:mem:jobradar;DB_CLOSE_DELAY=-1;MODE=MySQL
+    url: jdbc:h2:file:./data/jobradar;DB_CLOSE_DELAY=-1;MODE=MySQL;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
     password: ""
   jpa:
     hibernate:
-      ddl-auto: create-drop      # dev：每次启动重建表
+      ddl-auto: update           # dev：保留现有数据，只补新字段
     show-sql: false
     properties:
       hibernate.format_sql: true

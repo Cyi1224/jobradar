@@ -24,6 +24,7 @@ public class Profile {
     private String gradYear;
     private String gpa;
     private String intentCity;
+    private String intentJob;   // 意向岗位（AI 匹配用）
     private String plan;
 
     public Profile() {}
@@ -69,6 +70,8 @@ public class Profile {
     public void setGpa(String gpa) { this.gpa = gpa; }
     public String getIntentCity() { return intentCity; }
     public void setIntentCity(String intentCity) { this.intentCity = intentCity; }
+    public String getIntentJob() { return intentJob; }
+    public void setIntentJob(String intentJob) { this.intentJob = intentJob; }
     public String getPlan() { return plan; }
     public void setPlan(String plan) { this.plan = plan; }
 }

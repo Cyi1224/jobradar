@@ -22,7 +22,7 @@ const TYPES = {
 function defaultDoc() {
   return {
     template: 'latex',
-    theme: { accent: '#1A56DB', font: 'sans', spacing: 'normal', margin: 'normal' },
+    theme: { accent: '#1A56DB', font: 'sans', fontSize: 'md', nameSize: 'md', secStyle: 'normal', divider: 'thin', spacing: 'normal', margin: 'normal' },
     basics: { name: '张三', title: '后端开发工程师 · 2027届', phone: '138-0000-0000',
               email: 'zhangsan@example.com', location: '上海', link: 'github.com/zhangsan',
               photo: '', showPhoto: true },
@@ -89,9 +89,12 @@ export function initResumeEditor() {
   }
   function scheduleHistory() { clearTimeout(histTimer); histTimer = setTimeout(pushHistory, 500); }
   function updateUndoRedo() {
-    const u = document.getElementById('re-undo'), r = document.getElementById('re-redo');
-    if (u) u.disabled = hPtr <= 0;
-    if (r) r.disabled = hPtr >= history.length - 1;
+    const u  = document.getElementById('re-undo');
+    const u2 = document.getElementById('re-undo-btn');
+    const r  = document.getElementById('re-redo');
+    if (u)  u.disabled  = hPtr <= 0;
+    if (u2) u2.disabled = hPtr <= 0;
+    if (r)  r.disabled  = hPtr >= history.length - 1;
   }
   function undo() { if (hPtr > 0) { hPtr--; doc = JSON.parse(history[hPtr]); render(); syncControls(); scheduleSave(); updateUndoRedo(); } }
   function redo() { if (hPtr < history.length - 1) { hPtr++; doc = JSON.parse(history[hPtr]); render(); syncControls(); scheduleSave(); updateUndoRedo(); } }
@@ -182,7 +185,13 @@ export function initResumeEditor() {
   function render() {
     const t = doc.theme;
     canvas.className = 're-canvas tpl-' + doc.template;
-    canvas.dataset.font = t.font; canvas.dataset.spacing = t.spacing; canvas.dataset.margin = t.margin;
+    canvas.dataset.font     = t.font;
+    canvas.dataset.fontsize = t.fontSize  || 'md';
+    canvas.dataset.namesize = t.nameSize  || 'md';
+    canvas.dataset.secstyle = t.secStyle  || 'normal';
+    canvas.dataset.divider  = t.divider   || 'thin';
+    canvas.dataset.spacing  = t.spacing;
+    canvas.dataset.margin   = t.margin;
     canvas.style.setProperty('--re-accent', t.accent);
     const b = doc.basics;
     const showPhoto = b.showPhoto !== false;
@@ -284,8 +293,16 @@ export function initResumeEditor() {
   function syncControls() {
     document.querySelectorAll('.re-tpl').forEach((b) => b.classList.toggle('active', b.dataset.tpl === doc.template));
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-    set('re-accent', doc.theme.accent); set('re-font', doc.theme.font);
-    set('re-spacing', doc.theme.spacing); set('re-margin', doc.theme.margin);
+    set('re-accent',   doc.theme.accent);
+    set('re-font',     doc.theme.font);
+    set('re-fontsize', doc.theme.fontSize  || 'md');
+    set('re-namesize', doc.theme.nameSize  || 'md');
+    set('re-secstyle', doc.theme.secStyle  || 'normal');
+    set('re-divider',  doc.theme.divider   || 'thin');
+    set('re-spacing',  doc.theme.spacing);
+    set('re-margin',   doc.theme.margin);
+    // 同步色板激活状态
+    document.querySelectorAll('.re-swatch').forEach((s) => s.classList.toggle('active', s.dataset.color === doc.theme.accent));
     const cb = document.getElementById('re-showphoto'); if (cb) cb.checked = doc.basics.showPhoto !== false;
   }
   function wireControls() {
@@ -293,16 +310,37 @@ export function initResumeEditor() {
       b.addEventListener('click', () => structural(() => { doc.template = b.dataset.tpl; }) || syncControls()));
     const themeBind = (id, key) => document.getElementById(id)?.addEventListener('input', (e) => {
       doc.theme[key] = e.target.value;
-      // 主题变化无需重建结构，直接套用 + 记录历史
       const t = doc.theme;
-      canvas.dataset.font = t.font; canvas.dataset.spacing = t.spacing; canvas.dataset.margin = t.margin;
+      canvas.dataset.font     = t.font;
+      canvas.dataset.fontsize = t.fontSize  || 'md';
+      canvas.dataset.namesize = t.nameSize  || 'md';
+      canvas.dataset.secstyle = t.secStyle  || 'normal';
+      canvas.dataset.divider  = t.divider   || 'thin';
+      canvas.dataset.spacing  = t.spacing;
+      canvas.dataset.margin   = t.margin;
       canvas.style.setProperty('--re-accent', t.accent);
       scheduleHistory(); scheduleSave();
     });
-    themeBind('re-accent', 'accent'); themeBind('re-font', 'font'); themeBind('re-spacing', 'spacing'); themeBind('re-margin', 'margin');
+    themeBind('re-accent',   'accent');
+    themeBind('re-font',     'font');
+    themeBind('re-fontsize', 'fontSize');
+    themeBind('re-namesize', 'nameSize');
+    themeBind('re-secstyle', 'secStyle');
+    themeBind('re-divider',  'divider');
+    themeBind('re-spacing',  'spacing');
+    themeBind('re-margin',   'margin');
+    // 色板点击
+    document.querySelectorAll('.re-swatch').forEach((s) => s.addEventListener('click', () => {
+      doc.theme.accent = s.dataset.color;
+      document.getElementById('re-accent').value = s.dataset.color;
+      canvas.style.setProperty('--re-accent', s.dataset.color);
+      document.querySelectorAll('.re-swatch').forEach((x) => x.classList.toggle('active', x === s));
+      scheduleHistory(); scheduleSave();
+    }));
     document.getElementById('re-showphoto')?.addEventListener('change', (e) => structural(() => { doc.basics.showPhoto = e.target.checked; }));
     document.querySelectorAll('.re-addsec').forEach((b) => b.addEventListener('click', () => addSection(b.dataset.type)));
     document.getElementById('re-undo')?.addEventListener('click', undo);
+    document.getElementById('re-undo-btn')?.addEventListener('click', undo);
     document.getElementById('re-redo')?.addEventListener('click', redo);
     document.getElementById('re-save')?.addEventListener('click', () => { save(); showToast('已保存'); });
     document.getElementById('re-export')?.addEventListener('click', () => { save(); window.print(); });

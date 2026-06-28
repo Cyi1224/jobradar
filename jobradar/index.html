@@ -68,7 +68,9 @@
       <div class="nav-item"        data-page="aimatch"      role="menuitem"><i class="ti ti-cpu"></i>AI 匹配</div>
       <div class="nav-item"        data-page="review"       role="menuitem"><i class="ti ti-chart-pie"></i>投递复盘</div>
       <div class="nav-item"        data-page="benefits"     role="menuitem"><i class="ti ti-gift"></i>免费福利</div>
+      <!-- 定价栏目暂时隐藏，待支付接入后恢复
       <div class="nav-item"        data-page="pricing"      role="menuitem"><i class="ti ti-crown"></i>定价</div>
+      -->
     </div>
     <div class="nav-footer">
       <div class="nav-item" data-page="profile" role="menuitem"><i class="ti ti-user-circle"></i>个人中心</div>
@@ -82,31 +84,60 @@
     <!-- ════════ 总览 ════════ -->
     <div id="page-dashboard" class="page">
       <div class="topbar">
-        <div class="topbar-title">总览 <span class="badge b-blue">今日新增 19 家</span></div>
-        <button class="btn"><i class="ti ti-bell"></i>截止提醒</button>
+        <div class="topbar-title">总览</div>
+        <div id="dash-today-pill" class="badge b-blue" style="cursor:pointer" data-goto="jobdb"></div>
         <button class="btn primary" data-goto="addjob"><i class="ti ti-plus"></i>添加岗位</button>
       </div>
       <div class="content">
-        <div class="stat-grid" id="dash-stats"></div>
+
+        <!-- 快捷入口 -->
+        <div class="dash-quick">
+          <button class="dash-quick-btn" data-goto="jobdb"><i class="ti ti-database"></i><span>校招库</span></button>
+          <button class="dash-quick-btn" data-goto="applications"><i class="ti ti-send"></i><span>我的投递</span></button>
+          <button class="dash-quick-btn" data-goto="aimatch"><i class="ti ti-cpu"></i><span>AI 匹配</span></button>
+          <button class="dash-quick-btn" data-goto="resume"><i class="ti ti-file-cv"></i><span>简历管理</span></button>
+          <button class="dash-quick-btn" data-goto="addjob"><i class="ti ti-circle-plus"></i><span>添加岗位</span></button>
+        </div>
+
+        <!-- 数据统计卡 -->
+        <div class="dash-stat-grid" id="dash-stats"></div>
+
+        <!-- 投递漏斗 + 截止提醒 -->
         <div class="two-col">
           <div class="card">
-            <div class="section-title">投递漏斗</div>
+            <div class="section-title"><i class="ti ti-filter" style="color:var(--brand)"></i>投递进度漏斗</div>
             <div class="funnel" id="dash-funnel"></div>
           </div>
           <div class="card">
-            <div class="section-title"><i class="ti ti-alarm" style="color:#E02424;margin-right:4px"></i>即将截止</div>
+            <div class="section-title"><i class="ti ti-alarm" style="color:#E02424"></i>即将截止
+              <span class="section-title-action" data-goto="applications">查看全部 <i class="ti ti-chevron-right"></i></span>
+            </div>
             <div class="deadline-list" id="dash-deadlines"></div>
           </div>
         </div>
-        <div class="card">
-          <div class="section-title">今日推荐岗位</div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>公司</th><th>岗位</th><th>城市</th><th>截止</th><th>匹配度</th><th>操作</th></tr></thead>
-              <tbody id="dash-recommend"></tbody>
-            </table>
+
+        <!-- 两列：状态分布 + 最近动态 -->
+        <div class="two-col">
+          <div class="card">
+            <div class="section-title"><i class="ti ti-chart-donut" style="color:var(--brand)"></i>状态分布</div>
+            <div id="dash-status-dist"></div>
+          </div>
+          <div class="card">
+            <div class="section-title"><i class="ti ti-history" style="color:var(--brand)"></i>最近动态
+              <span class="section-title-action" data-goto="applications">全部投递 <i class="ti ti-chevron-right"></i></span>
+            </div>
+            <div id="dash-activity"></div>
           </div>
         </div>
+
+        <!-- 今日推荐 -->
+        <div class="card">
+          <div class="section-title"><i class="ti ti-sparkles" style="color:var(--brand)"></i>今日推荐岗位
+            <span class="section-title-action" data-goto="aimatch">查看更多 <i class="ti ti-chevron-right"></i></span>
+          </div>
+          <div id="dash-recommend"></div>
+        </div>
+
       </div>
     </div>
 
@@ -253,7 +284,7 @@
             <button class="btn sm jdb-reset" id="jdb-reset"><i class="ti ti-refresh"></i>重置筛选</button>
           </div>
           <div class="jdb-search-row">
-            <div class="search-box"><i class="ti ti-search"></i><input type="text" id="jobdb-search" placeholder="搜索公司、岗位、行业、城市、备注关键词"></div>
+            <div class="search-box"><i class="ti ti-search"></i><input type="text" id="jobdb-search" placeholder="搜索公司、岗位、行业、城市（多个关键词用 , 隔开）"></div>
             <select class="filter-select" id="jobdb-f-recruit"><option value="">全部类型</option></select>
             <select class="filter-select" id="jobdb-f-industry"><option value="">全部行业</option></select>
             <select class="filter-select" id="jobdb-f-city"><option value="">城市</option></select>
@@ -379,8 +410,53 @@
           <div class="re-group">
             <div class="re-group-title">主题</div>
             <label class="re-ctrl"><span>主题色</span><input type="color" id="re-accent" value="#1A56DB"></label>
+            <div class="re-ctrl"><span>配色方案</span>
+              <div class="re-swatches">
+                <button class="re-swatch" data-color="#1A56DB" style="background:#1A56DB" title="商务蓝"></button>
+                <button class="re-swatch" data-color="#059669" style="background:#059669" title="翠绿"></button>
+                <button class="re-swatch" data-color="#7C3AED" style="background:#7C3AED" title="典雅紫"></button>
+                <button class="re-swatch" data-color="#DC2626" style="background:#DC2626" title="热情红"></button>
+                <button class="re-swatch" data-color="#D97706" style="background:#D97706" title="暖橙"></button>
+                <button class="re-swatch" data-color="#374151" style="background:#374151" title="深灰"></button>
+              </div>
+            </div>
             <label class="re-ctrl"><span>字体</span>
-              <select id="re-font"><option value="sans">无衬线</option><option value="serif">衬线</option><option value="mono">等宽</option></select></label>
+              <select id="re-font">
+                <option value="sans">无衬线</option>
+                <option value="serif">衬线</option>
+                <option value="mono">等宽</option>
+                <option value="humanist">人文体</option>
+              </select></label>
+            <label class="re-ctrl"><span>正文字号</span>
+              <select id="re-fontsize">
+                <option value="xs">小（11px）</option>
+                <option value="sm">偏小（12px）</option>
+                <option value="md" selected>标准（12.5px）</option>
+                <option value="lg">偏大（13.5px）</option>
+                <option value="xl">大（14.5px）</option>
+              </select></label>
+            <label class="re-ctrl"><span>姓名字号</span>
+              <select id="re-namesize">
+                <option value="sm">小（22px）</option>
+                <option value="md" selected>标准（26px）</option>
+                <option value="lg">大（30px）</option>
+                <option value="xl">超大（36px）</option>
+              </select></label>
+            <label class="re-ctrl"><span>标题风格</span>
+              <select id="re-secstyle">
+                <option value="normal">默认</option>
+                <option value="upper">全大写</option>
+                <option value="bold">加粗</option>
+                <option value="color">彩色</option>
+                <option value="upper-bold">大写加粗</option>
+              </select></label>
+            <label class="re-ctrl"><span>分隔线</span>
+              <select id="re-divider">
+                <option value="thin">细线</option>
+                <option value="bold">粗线</option>
+                <option value="dotted">虚线</option>
+                <option value="none">无</option>
+              </select></label>
             <label class="re-ctrl"><span>间距</span>
               <select id="re-spacing"><option value="compact">紧凑</option><option value="normal">标准</option><option value="relaxed">宽松</option></select></label>
             <label class="re-ctrl"><span>页边距</span>
@@ -400,6 +476,9 @@
               <button class="re-addsec" data-type="summary">＋简介</button>
               <button class="re-addsec" data-type="custom">＋自定义</button>
             </div>
+            <button class="re-undo-btn" id="re-undo-btn" style="margin-top:8px;width:100%">
+              <i class="ti ti-arrow-back-up"></i> 回退上一步
+            </button>
           </div>
           <div class="re-group">
             <div class="re-group-title">自动保存间隔</div>
@@ -422,38 +501,111 @@
     <div id="page-autofill" class="page">
       <div class="topbar">
         <div class="topbar-title">自动填充</div>
-        <button class="btn primary"><i class="ti ti-device-floppy"></i>保存信息</button>
+        <button class="btn" id="af-clear-btn"><i class="ti ti-eraser"></i>清空</button>
+        <button class="btn primary" id="af-save-btn"><i class="ti ti-device-floppy"></i>保存信息</button>
       </div>
       <div class="content">
-        <div class="card info-banner">
-          <i class="ti ti-info-circle" style="color:#1A56DB;font-size:18px;flex-shrink:0"></i>
+
+        <!-- 上传区 -->
+        <div class="card af-upload-card" id="af-upload-zone">
+          <div class="af-upload-inner" id="af-drop-area">
+            <i class="ti ti-cloud-upload af-upload-icon"></i>
+            <div class="af-upload-title">上传简历自动识别</div>
+            <div class="af-upload-sub">支持 PDF、DOCX、TXT 格式，信息仅在本地处理</div>
+            <div class="af-upload-btns">
+              <label class="btn primary af-file-label">
+                <i class="ti ti-upload"></i>选择文件
+                <input type="file" id="af-file-input" accept=".pdf,.docx,.doc,.txt" style="display:none">
+              </label>
+              <button class="btn" id="af-paste-btn"><i class="ti ti-clipboard-text"></i>粘贴文本</button>
+            </div>
+          </div>
+          <!-- 粘贴区（默认隐藏）-->
+          <div id="af-paste-area" style="display:none">
+            <textarea id="af-paste-text" placeholder="将简历文本粘贴到这里…" rows="8" style="width:100%;resize:vertical;padding:12px;border:1px solid var(--c-border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;line-height:1.6"></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn primary" id="af-parse-paste-btn"><i class="ti ti-search"></i>开始识别</button>
+              <button class="btn" id="af-cancel-paste-btn"><i class="ti ti-x"></i>取消</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 处理状态 -->
+        <div id="af-status" style="display:none" class="card af-status-card">
+          <i class="ti ti-loader-2 jdb-spin" style="font-size:20px;color:var(--brand)"></i>
+          <span id="af-status-text">正在解析简历…</span>
+        </div>
+
+        <!-- 识别结果提示 -->
+        <div id="af-result-banner" style="display:none" class="card info-banner af-result-banner">
+          <i class="ti ti-check-circle" style="color:var(--green);font-size:18px;flex-shrink:0"></i>
           <div>
-            <div style="font-size:13px;font-weight:500;color:#1A56DB;margin-bottom:2px">浏览器插件已就绪</div>
-            <div style="font-size:12px;color:var(--c-text-2)">在招聘网站表单页面点击插件图标，即可一键填入以下信息。所有数据仅存储在本地，不上传至服务器。</div>
+            <div style="font-size:13px;font-weight:500;color:var(--green);margin-bottom:2px">识别完成</div>
+            <div id="af-result-desc" style="font-size:12px;color:var(--c-text-2)">请核对以下信息，有误可直接修改后保存。</div>
           </div>
         </div>
+
+        <!-- 信息表单 -->
         <div class="card">
-          <div class="section-title">个人基本信息</div>
+          <div class="section-title"><i class="ti ti-user" style="color:var(--brand)"></i>个人基本信息</div>
           <div class="autofill-form">
-            <div class="form-row"><div class="field"><label>姓名</label><input type="text" id="autofill-name"></div><div class="field"><label>手机号</label><input type="tel" id="autofill-phone"></div></div>
-            <div class="form-row"><div class="field"><label>邮箱</label><input type="email" id="autofill-email"></div><div class="field"><label>性别</label><select id="autofill-gender"><option>男</option><option>女</option></select></div></div>
-            <div class="form-row"><div class="field"><label>学校</label><input type="text" id="autofill-school"></div><div class="field"><label>学历</label><select id="autofill-education"><option>本科</option><option>硕士</option><option>博士</option></select></div></div>
-            <div class="form-row"><div class="field"><label>专业</label><input type="text" id="autofill-major"></div><div class="field"><label>毕业年份</label><select id="autofill-gradyear"><option>2027</option><option>2026</option><option>2025</option></select></div></div>
-            <div class="form-row"><div class="field"><label>GPA</label><input type="text" id="autofill-gpa"></div><div class="field"><label>意向城市</label><input type="text" id="autofill-city"></div></div>
+            <div class="form-row">
+              <div class="field af-field" id="aff-name"><label>姓名</label><input type="text" id="autofill-name" placeholder="请输入或上传简历自动识别"></div>
+              <div class="field af-field" id="aff-phone"><label>手机号</label><input type="tel" id="autofill-phone" placeholder="11位手机号"></div>
+            </div>
+            <div class="form-row">
+              <div class="field af-field" id="aff-email"><label>邮箱</label><input type="email" id="autofill-email" placeholder="example@mail.com"></div>
+              <div class="field af-field" id="aff-gender"><label>性别</label>
+                <select id="autofill-gender"><option value="">请选择</option><option>男</option><option>女</option></select>
+              </div>
+            </div>
           </div>
         </div>
+
         <div class="card">
-          <div class="section-title">支持的招聘平台</div>
-          <div class="tag-row" style="flex-wrap:wrap;gap:8px">
-            <span class="badge b-green"><i class="ti ti-check"></i> 牛客网</span>
-            <span class="badge b-green"><i class="ti ti-check"></i> 实习僧</span>
-            <span class="badge b-green"><i class="ti ti-check"></i> 校招通</span>
-            <span class="badge b-green"><i class="ti ti-check"></i> 应届生求职网</span>
-            <span class="badge b-blue"><i class="ti ti-clock"></i> 华为招聘</span>
-            <span class="badge b-blue"><i class="ti ti-clock"></i> 字节招聘</span>
-            <span class="badge b-gray"><i class="ti ti-plus"></i> 更多适配中</span>
+          <div class="section-title"><i class="ti ti-school" style="color:var(--brand)"></i>教育信息</div>
+          <div class="autofill-form">
+            <div class="form-row">
+              <div class="field af-field" id="aff-school"><label>学校</label><input type="text" id="autofill-school" placeholder="毕业/就读院校"></div>
+              <div class="field af-field" id="aff-education"><label>学历</label>
+                <select id="autofill-education"><option value="">请选择</option><option>本科</option><option>硕士</option><option>博士</option><option>专科</option></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field af-field" id="aff-major"><label>专业</label><input type="text" id="autofill-major" placeholder="所学专业"></div>
+              <div class="field af-field" id="aff-gradyear"><label>毕业年份</label>
+                <select id="autofill-gradyear">
+                  <option value="">请选择</option>
+                  <option>2028</option><option>2027</option><option>2026</option><option>2025</option><option>2024</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field af-field" id="aff-gpa"><label>GPA</label><input type="text" id="autofill-gpa" placeholder="如 3.8/4.0"></div>
+              <div class="field af-field" id="aff-city"><label>意向城市</label><input type="text" id="autofill-city" placeholder="如：北京,上海,深圳"></div>
+            </div>
           </div>
         </div>
+
+        <div class="card">
+          <div class="section-title"><i class="ti ti-briefcase" style="color:var(--brand)"></i>求职意向</div>
+          <div class="autofill-form">
+            <div class="form-row">
+              <div class="field af-field" id="aff-intentjob"><label>意向岗位</label><input type="text" id="autofill-intentjob" placeholder="如：后端开发,算法工程师（多个用逗号分隔）"></div>
+              <div class="field af-field" id="aff-skills"><label>技能标签</label><input type="text" id="autofill-skills" placeholder="如：Java,Python,MySQL（逗号分隔）"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 识别的原始文本（可折叠）-->
+        <div id="af-raw-card" class="card" style="display:none">
+          <div class="section-title" style="cursor:pointer" id="af-raw-toggle">
+            <i class="ti ti-file-text" style="color:var(--brand)"></i>识别的简历文本
+            <span style="margin-left:auto;font-size:12px;color:var(--brand)">收起 <i class="ti ti-chevron-up"></i></span>
+          </div>
+          <pre id="af-raw-text" style="font-size:12px;color:var(--c-text-2);white-space:pre-wrap;line-height:1.6;max-height:200px;overflow-y:auto;background:var(--c-bg-1);padding:12px;border-radius:var(--radius-sm)"></pre>
+        </div>
+
       </div>
     </div>
 
@@ -464,14 +616,9 @@
         <button class="btn primary" id="aimatch-refresh"><i class="ti ti-refresh"></i>刷新推荐</button>
       </div>
       <div class="content">
-        <div class="card" style="margin-bottom:16px">
+        <div class="card" id="aimatch-profile-card" style="margin-bottom:16px">
           <div class="section-title">我的求职偏好</div>
-          <div class="tag-row" style="flex-wrap:wrap">
-            <span class="badge b-blue">后端开发</span><span class="badge b-blue">算法工程师</span>
-            <span class="badge b-gray">上海</span><span class="badge b-gray">北京</span><span class="badge b-gray">深圳</span>
-            <span class="badge b-green">互联网</span><span class="badge b-green">AI/人工智能</span>
-            <button class="btn sm"><i class="ti ti-edit"></i>编辑偏好</button>
-          </div>
+          <div id="aimatch-profile-summary" class="tag-row" style="flex-wrap:wrap"></div>
         </div>
         <div class="section-title">为你推荐 — 共 <span id="aimatch-count">0</span> 个岗位</div>
         <div id="aimatch-list"></div>
@@ -555,7 +702,7 @@
       </div>
     </div>
 
-    <!-- ════════ 定价 ════════ -->
+    <!-- ════════ 定价（暂时隐藏，待支付接入后恢复）════════
     <div id="page-pricing" class="page">
       <div class="topbar">
         <div class="topbar-title">开通会员 · 解锁全部校招信息</div>
@@ -564,6 +711,7 @@
         <div id="pricing-body"></div>
       </div>
     </div>
+    ════════ 定价结束 ════════ -->
 
     <!-- ════════ 个人中心 ════════ -->
     <div id="page-profile" class="page">
@@ -584,8 +732,13 @@
         <div class="card">
           <div class="section-title">基本信息</div>
           <div class="autofill-form">
-            <div class="form-row"><div class="field"><label>姓名</label><input id="profile-f-name"></div><div class="field"><label>邮箱</label><input id="profile-f-email"></div></div>
-            <div class="form-row"><div class="field"><label>学校</label><input id="profile-f-school"></div><div class="field"><label>专业</label><input id="profile-f-major"></div></div>
+            <div class="form-row"><div class="field"><label>姓名</label><input id="profile-f-name" placeholder="请输入姓名"></div><div class="field"><label>邮箱</label><input id="profile-f-email" placeholder="请输入邮箱"></div></div>
+            <div class="form-row"><div class="field"><label>学校</label><input id="profile-f-school" placeholder="请输入学校名称"></div><div class="field"><label>专业</label><input id="profile-f-major" placeholder="如：计算机科学与技术"></div></div>
+            <div class="form-row"><div class="field"><label>意向岗位 <span style="color:var(--brand);font-size:11px">· AI匹配必填</span></label><input id="profile-f-intentjob" placeholder="如：后端开发,算法工程师（多个用逗号分隔）"></div><div class="field"><label>意向城市</label><input id="profile-f-intentcity" placeholder="如：北京,上海,深圳"></div></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn primary" id="profile-save-btn"><i class="ti ti-device-floppy"></i>保存信息</button>
+            <span id="profile-save-tip" style="font-size:12px;color:var(--c-text-3);align-self:center"></span>
           </div>
         </div>
       </div>

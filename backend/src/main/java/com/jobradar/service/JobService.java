@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,14 +61,18 @@ public class JobService {
         return (root, query, cb) -> {
             List<Predicate> ps = new ArrayList<>();
             if (StringUtils.hasText(q)) {
-                String like = "%" + q.trim() + "%";
-                ps.add(cb.or(
-                        cb.like(root.get("co"), like),
-                        cb.like(root.get("positions"), like),
-                        cb.like(root.get("city"), like),
-                        cb.like(root.get("industry"), like),
-                        cb.like(cb.coalesce(root.get("note"), ""), like)
-                ));
+                String[] keywords = q.trim().split("[,，]+");
+                Predicate[] kwPreds = Arrays.stream(keywords)
+                        .map(String::trim).filter(kw -> !kw.isEmpty())
+                        .map(kw -> { String like = "%" + kw + "%";
+                            return cb.or(
+                                cb.like(root.get("co"), like),
+                                cb.like(root.get("positions"), like),
+                                cb.like(root.get("city"), like),
+                                cb.like(root.get("industry"), like),
+                                cb.like(cb.coalesce(root.get("note"), ""), like));
+                        }).toArray(Predicate[]::new);
+                if (kwPreds.length > 0) ps.add(cb.or(kwPreds));
             }
             if (StringUtils.hasText(recruitType)) ps.add(cb.equal(root.get("recruitType"), recruitType));
             if (StringUtils.hasText(industry))    ps.add(cb.equal(root.get("industry"), industry));

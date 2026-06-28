@@ -3,7 +3,6 @@ package com.jobradar.controller;
 import com.jobradar.dto.JobPageDTO;
 import com.jobradar.dto.JobSyncReq;
 import com.jobradar.service.JobService;
-import com.jobradar.service.MembershipService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +21,11 @@ import java.util.Map;
 public class JobController {
 
     private final JobService service;
-    private final MembershipService membership;
     private final String syncToken;
 
-    public JobController(JobService service, MembershipService membership,
+    public JobController(JobService service,
                          @Value("${jobradar.sync-token:changeme}") String syncToken) {
         this.service = service;
-        this.membership = membership;
         this.syncToken = syncToken;
     }
 
@@ -46,8 +43,8 @@ public class JobController {
             @RequestParam(defaultValue = "false") boolean inst,
             @RequestParam(defaultValue = "false") boolean foreign,
             @RequestParam(required = false) String updatedAt) {
-        boolean unlimited = membership.isCurrentUserMember();   // 会员不限页
-        return service.search(q, recruitType, industry, city, apply, urgent, soe, inst, foreign, updatedAt, page, size, unlimited);
+        // boolean unlimited = membership.isCurrentUserMember(); // 暂时全员免费，待支付接入后恢复
+        return service.search(q, recruitType, industry, city, apply, urgent, soe, inst, foreign, updatedAt, page, size, true);
     }
 
     @GetMapping("/stats")

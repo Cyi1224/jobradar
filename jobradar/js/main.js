@@ -16,7 +16,7 @@ import { initReview } from './views/review.js';
 import { initResumeEditor } from './views/resumeeditor.js';
 import { initAutofill } from './views/autofill.js';
 import { initProfile } from './views/profile.js';
-import { initPricing } from './views/pricing.js';
+// import { initPricing } from './views/pricing.js'; // 待支付接入后恢复
 import { showToast } from './core/toast.js';
 
 /* ── 装配业务模块（登录与否都先把页面渲染出来）── */
@@ -30,7 +30,7 @@ initReview();
 initResumeEditor();
 initAutofill();
 initProfile();
-initPricing();
+// initPricing(); // 待支付接入后恢复
 
 renderAccount();
 wireAuthModal();

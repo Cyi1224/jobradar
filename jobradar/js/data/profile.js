@@ -23,8 +23,21 @@ const profileMock = {
 
 const profileHttp = {
   async get() {
-    const res = await fetch(CONFIG.API_BASE + '/profile');
+    const token = localStorage.getItem('jr_token') || '';
+    const res = await fetch(CONFIG.API_BASE + '/profile', {
+      headers: token ? { Authorization: 'Bearer ' + token } : {},
+    });
     if (!res.ok) throw new Error('请求失败 ' + res.status);
+    return res.json();
+  },
+  async save(data) {
+    const token = localStorage.getItem('jr_token') || '';
+    const res = await fetch(CONFIG.API_BASE + '/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('保存失败 ' + res.status);
     return res.json();
   },
 };

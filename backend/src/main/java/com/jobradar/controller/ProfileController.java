@@ -2,11 +2,9 @@ package com.jobradar.controller;
 
 import com.jobradar.entity.Profile;
 import com.jobradar.service.ProfileService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-/** 用户资料：GET /api/profile */
+/** 用户资料：GET /api/profile   PUT /api/profile */
 @RestController
 @RequestMapping("/api/profile")
 public class ProfileController {
@@ -20,5 +18,10 @@ public class ProfileController {
     @GetMapping
     public Profile get() {
         return service.get();
+    }
+
+    @PutMapping
+    public Profile save(@RequestBody Profile body) {
+        return service.save(body);
     }
 }
