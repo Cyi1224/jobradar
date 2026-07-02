@@ -12,6 +12,9 @@ export const CONFIG = {
   USE_MOCK: false,
   API_BASE: '/api',
 
+  /** 百度统计 ID — 在 tongji.baidu.com 注册站点后获取，填在这里即可生效 */
+  BAIDU_TONGJI_ID: '7012d6646f9652d2c9521cb73787ec95',
+
   /**
    * ── 大模型直连（OpenAI 兼容接口）──
    * 【当前状态：休眠】简历评分、模拟面试两个 AI 功能已移除，暂无页面调用此配置；

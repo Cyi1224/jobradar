@@ -74,8 +74,8 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private Long ensureDemoUser() {
-        return userRepo.findByUsername("demo").map(User::getId).orElseGet(() ->
-                userRepo.save(new User("demo", new BCryptPasswordEncoder().encode("demo123"))).getId());
+        return userRepo.findByAccount("demo").map(User::getId).orElseGet(() ->
+                userRepo.save(new User("demo", "演示用户", new BCryptPasswordEncoder().encode("demo123"))).getId());
     }
 
     private void seedApplications() {

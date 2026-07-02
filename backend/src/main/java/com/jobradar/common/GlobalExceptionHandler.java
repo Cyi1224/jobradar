@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         String msg = ex.getBindingResult().getFieldErrors().stream()
-                .findFirst().map(e -> e.getDefaultMessage()).orElse("参数校验失败");
+                .findFirst().map(e -> e.getField() + "：" + e.getDefaultMessage()).orElse("参数校验失败");
         return body(HttpStatus.BAD_REQUEST, msg);
     }
 

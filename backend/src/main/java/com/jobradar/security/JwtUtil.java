@@ -25,11 +25,12 @@ public class JwtUtil {
         this.ttlMillis = ttlDays * 24 * 3600 * 1000L;
     }
 
-    public String issue(Long userId, String username) {
+    public String issue(Long userId, String account, String displayName) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
-                .claim("username", username)
+                .claim("account", account)
+                .claim("displayName", displayName)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + ttlMillis))
                 .signWith(key)

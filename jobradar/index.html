@@ -9,6 +9,18 @@
   <title>JobRadar · 职雷 — 大学生智能求职平台</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="icons/tabler-icons.min.css" />
+  <!-- 百度统计 — 仅线上生效 -->
+  <script>
+  if (location.hostname === 'jobradar.xin' || location.hostname.endsWith('.jobradar.xin')) {
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?7012d6646f9652d2c9521cb73787ec95";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  }
+  </script>
 </head>
 <body>
 
@@ -20,8 +32,10 @@
     <div class="auth-brand"><div class="nav-logo"><svg width="20" height="20" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="14" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/><circle cx="17" cy="17" r="9.5" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><circle cx="17" cy="17" r="5" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.40)" stroke-width="1"/><path d="M17,17 L17,3 A14,14 0 0,1 29.1,10 Z" fill="rgba(255,255,255,0.18)"/><circle cx="24" cy="10.5" r="1.2" fill="#fff"/><circle cx="10" cy="23" r="0.9" fill="#f97316"/><circle cx="17" cy="17" r="1" fill="#fff"/></svg></div><div class="auth-brand-name">职雷 JobRadar</div></div>
     <div class="auth-title" id="auth-title">登录</div>
     <div class="auth-sub" id="auth-sub">登录后即可管理你的投递、简历与资料</div>
-    <div class="auth-field"><label>用户名</label><input type="text" id="auth-username" autocomplete="username" placeholder="3-32 位"></div>
-    <div class="auth-field"><label>密码</label><input type="password" id="auth-password" autocomplete="current-password" placeholder="至少 6 位"></div>
+    <div class="auth-field auth-reg-only"><label>用户名</label><input type="text" id="auth-displayname" autocomplete="name" placeholder="任意字符，最长 15 位" maxlength="15"></div>
+    <div class="auth-field"><label>账号</label><input type="text" id="auth-account" autocomplete="username" placeholder="仅数字和英文字母"></div>
+    <div class="auth-field"><label>密码</label><input type="password" id="auth-password" autocomplete="new-password" placeholder="数字、英文或符号，至少 6 位"></div>
+    <div class="auth-field auth-reg-only"><label>确认密码</label><input type="password" id="auth-password2" autocomplete="new-password" placeholder="请再次输入密码"></div>
     <div class="auth-error" id="auth-error"></div>
     <button class="btn primary auth-submit" id="auth-submit">登录</button>
     <div class="auth-switch">

@@ -12,8 +12,13 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 64)
-    private String username;
+    /** 登录账号（仅数字/英文字母），映射到 DB 的 username 列确保向后兼容 */
+    @Column(name = "username", nullable = false, length = 64)
+    private String account;
+
+    /** 显示昵称（支持中文等任意字符，最长 15 位） */
+    @Column(length = 32)
+    private String displayName;
 
     @Column(nullable = false, length = 100)
     private String passwordHash;
@@ -24,15 +29,18 @@ public class User {
 
     public User() {}
 
-    public User(String username, String passwordHash) {
-        this.username = username;
+    public User(String account, String displayName, String passwordHash) {
+        this.account = account;
+        this.displayName = displayName;
         this.passwordHash = passwordHash;
     }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public String getAccount() { return account; }
+    public void setAccount(String account) { this.account = account; }
+    public String getDisplayName() { return displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public LocalDateTime getCreatedAt() { return createdAt; }

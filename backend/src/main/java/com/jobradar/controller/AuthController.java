@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * 用户系统：
- *   POST /api/auth/register  注册 { username, password } → { token, username }
- *   POST /api/auth/login     登录 { username, password } → { token, username }
+ *   POST /api/auth/register  注册 { account, displayName, password } → { token, account, displayName }
+ *   POST /api/auth/login     登录 { account, password } → { token, account, displayName }
  * 这两个接口在 JwtAuthFilter 中放行，其余 /api/** 均需带 Bearer 令牌。
  */
 @RestController
@@ -30,20 +30,30 @@ public class AuthController {
 
     @PostMapping("/register")
     public AuthResp register(@Valid @RequestBody AuthReq req) {
-        if (users.existsByUsername(req.username())) {
-            throw new IllegalArgumentException("用户名已被占用");
+        // 注册时 displayName 必填，长度不超过 15
+        String dn = req.displayName();
+        if (dn == null || dn.isBlank()) {
+            throw new IllegalArgumentException("用户名不能为空");
         }
-        User u = users.save(new User(req.username(), encoder.encode(req.password())));
-        return new AuthResp(jwt.issue(u.getId(), u.getUsername()), u.getUsername());
+        if (dn.length() > 15) {
+            throw new IllegalArgumentException("用户名长度不能超过 15 位");
+        }
+        if (users.existsByAccount(req.account())) {
+            throw new IllegalArgumentException("账号已被占用");
+        }
+        User u = users.save(new User(req.account(), dn.trim(), encoder.encode(req.password())));
+        return new AuthResp(jwt.issue(u.getId(), u.getAccount(), u.getDisplayName()), u.getAccount(), u.getDisplayName());
     }
 
     @PostMapping("/login")
     public AuthResp login(@Valid @RequestBody AuthReq req) {
-        User u = users.findByUsername(req.username())
-                .orElseThrow(() -> new IllegalArgumentException("用户名或密码错误"));
+        User u = users.findByAccount(req.account())
+                .orElseThrow(() -> new IllegalArgumentException("账号或密码错误"));
         if (!encoder.matches(req.password(), u.getPasswordHash())) {
-            throw new IllegalArgumentException("用户名或密码错误");
+            throw new IllegalArgumentException("账号或密码错误");
         }
-        return new AuthResp(jwt.issue(u.getId(), u.getUsername()), u.getUsername());
+        // displayName 可能为 null（历史用户），给个兜底值
+        String dn = u.getDisplayName() != null ? u.getDisplayName() : u.getAccount();
+        return new AuthResp(jwt.issue(u.getId(), u.getAccount(), dn), u.getAccount(), dn);
     }
 }

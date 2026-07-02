@@ -8,11 +8,13 @@
 import { CONFIG } from '../config.js';
 
 const TOKEN_KEY = 'jr_token';
-const USER_KEY  = 'jr_user';
+const USER_KEY  = 'jr_user';       // 存储 displayName 用于 UI 展示
+const ACCT_KEY  = 'jr_account';    // 存储 account（登录标识）
 
-function save(token, username) {
+function save(token, account, displayName) {
   localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(USER_KEY, username);
+  localStorage.setItem(ACCT_KEY, account);
+  localStorage.setItem(USER_KEY, displayName || account);
 }
 
 async function post(path, body) {
@@ -30,28 +32,30 @@ async function post(path, body) {
 const authMock = {
   async login(u, p) {
     if (!u || !p) throw new Error('请输入账号和密码');
-    return { token: 'mock-' + u, username: u };
+    return { token: 'mock-' + u, account: u, displayName: u };
   },
-  async register(u, p) {
-    if (!u || u.length < 3) throw new Error('用户名至少 3 位');
+  async register(a, dn, p) {
+    if (!a || a.length < 3) throw new Error('账号至少 3 位');
+    if (!dn || dn.length > 15) throw new Error('用户名最长 15 位');
     if (!p || p.length < 6) throw new Error('密码至少 6 位');
-    return { token: 'mock-' + u, username: u };
+    return { token: 'mock-' + a, account: a, displayName: dn };
   },
 };
 
 /* http：对接 Spring Boot */
 const authHttp = {
-  login(u, p)    { return post('/auth/login', { username: u, password: p }); },
-  register(u, p) { return post('/auth/register', { username: u, password: p }); },
+  login(a, p)         { return post('/auth/login',    { account: a, password: p }); },
+  register(a, dn, p)  { return post('/auth/register', { account: a, displayName: dn, password: p }); },
 };
 
 const adapter = CONFIG.USE_MOCK ? authMock : authHttp;
 
 export const Auth = {
-  getToken()  { return localStorage.getItem(TOKEN_KEY) || ''; },
-  getUser()   { return localStorage.getItem(USER_KEY) || ''; },
-  isLoggedIn(){ return !!localStorage.getItem(TOKEN_KEY); },
-  logout()    { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); location.reload(); },
-  async login(u, p)    { const r = await adapter.login(u, p);    save(r.token, r.username); return r; },
-  async register(u, p) { const r = await adapter.register(u, p); save(r.token, r.username); return r; },
+  getToken()   { return localStorage.getItem(TOKEN_KEY) || ''; },
+  getUser()    { return localStorage.getItem(USER_KEY) || ''; },
+  getAccount() { return localStorage.getItem(ACCT_KEY) || ''; },
+  isLoggedIn() { return !!localStorage.getItem(TOKEN_KEY); },
+  logout()     { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(ACCT_KEY); localStorage.removeItem(USER_KEY); location.reload(); },
+  async login(a, p)          { const r = await adapter.login(a, p);          save(r.token, r.account, r.displayName); return r; },
+  async register(a, dn, p)   { const r = await adapter.register(a, dn, p);  save(r.token, r.account, r.displayName); return r; },
 };
