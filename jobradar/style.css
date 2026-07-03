@@ -1105,8 +1105,16 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
     box-shadow: 0 -4px 20px rgba(0,0,0,.08);
   }
 
-  /* 隐藏品牌区和账号区，只保留菜单 */
-  .nav-brand, .nav-footer { display: none; }
+  /* 隐藏品牌区，账号区压缩显示 */
+  .nav-brand { display: none; }
+  .nav-footer {
+    display: flex; align-items: center;
+    padding: 0 8px; border-top: none; border-left: 1px solid var(--c-border);
+    flex-shrink: 0;
+  }
+  .nav-footer .nav-item { font-size: 9.5px !important; flex-direction: column; gap: 2px; padding: 6px 4px; border-radius: 0; }
+  .nav-footer .nav-item i { font-size: 18px !important; }
+  .nav-account { padding: 0; }
 
   .nav-menu {
     display: flex; flex-direction: row;
@@ -1131,8 +1139,9 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   .nav-item.active { background: none; font-size: 9.5px !important; color: var(--brand); font-weight: 700; }
   .nav-item.active i { color: var(--brand); }
 
-  /* 只显示前 5 个导航项（校招库/总览/我的投递/添加/简历管理） */
-  .nav-item:nth-child(n+6) { display: none; }
+  /* 显示前 5 个 + 个人中心始终可见 */
+  .nav-item:nth-child(n+6):not(.nav-item-profile) { display: none; }
+  .nav-item-profile i { color: var(--brand); }
 
   /* 主区域全宽，底部留出 58px 给导航栏 */
   .main { min-width: 0; width: 100%; }
@@ -1199,6 +1208,14 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   /* iPhone 刘海屏 safe-area 适配 */
   .nav { padding-bottom: env(safe-area-inset-bottom, 0px); height: calc(58px + env(safe-area-inset-bottom, 0px)) !important; }
   .content { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important; }
+
+  /* ── 移动端底部导航栏：登录/用户按钮紧凑化 ── */
+  .nav-login {
+    padding: 8px 10px !important; font-size: 11px !important; border-radius: var(--radius-sm) !important;
+    width: auto !important; white-space: nowrap;
+  }
+  .nav-user-name { font-size: 10px; max-width: 60px; }
+  .nav-logout { font-size: 10px; padding: 3px 6px; }
 
   /* ── 移动端卡片紧凑化 ── */
   .card { padding: 14px 14px; margin-bottom: 12px; border-radius: var(--radius-md); }
