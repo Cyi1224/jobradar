@@ -227,7 +227,7 @@ public class OfferbiuSyncService {
             positions = positions.substring(0, 1997) + "...";
         }
 
-        // 更新时间：提取日期部分
+        // 更新时间：使用 offerbiu 来源数据的发布时间
         String updatedAt = "";
         if (item.sourceUpdatedAt() != null && item.sourceUpdatedAt().length() >= 10) {
             updatedAt = item.sourceUpdatedAt().substring(0, 10); // "2026-07-03"
