@@ -142,6 +142,9 @@ public class AnalyticsService {
                     m.put("username", v.getUsername() != null ? v.getUsername() : "匿名");
                     m.put("visitType", v.getVisitType());
                     m.put("pageName", v.getPageName());
+                    m.put("region", v.getRegion() != null ? v.getRegion() : "");
+                    m.put("source", v.getSource() != null ? v.getSource() : "直接访问");
+                    m.put("referer", v.getReferer() != null ? v.getReferer() : "");
                     return m;
                 })
                 .collect(Collectors.toList());

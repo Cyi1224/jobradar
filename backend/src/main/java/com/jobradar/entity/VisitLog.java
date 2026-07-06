@@ -50,6 +50,14 @@ public class VisitLog {
     @Column(nullable = false, length = 10)
     private String visitType;
 
+    /** IP 所属地区，异步解析，如 "中国-广东-深圳"，可能为 null */
+    @Column(length = 128)
+    private String region;
+
+    /** 访问来源：搜索引擎 / 外部链接 / 直接访问 */
+    @Column(length = 64)
+    private String source;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public VisitLog() {}
@@ -97,6 +105,12 @@ public class VisitLog {
 
     public String getVisitType() { return visitType; }
     public void setVisitType(String visitType) { this.visitType = visitType; }
+
+    public String getRegion() { return region; }
+    public void setRegion(String region) { this.region = region; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
