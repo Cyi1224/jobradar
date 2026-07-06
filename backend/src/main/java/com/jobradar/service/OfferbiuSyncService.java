@@ -227,11 +227,8 @@ public class OfferbiuSyncService {
             positions = positions.substring(0, 1997) + "...";
         }
 
-        // 更新时间：使用 offerbiu 来源数据的发布时间
-        String updatedAt = "";
-        if (item.sourceUpdatedAt() != null && item.sourceUpdatedAt().length() >= 10) {
-            updatedAt = item.sourceUpdatedAt().substring(0, 10); // "2026-07-03"
-        }
+        // 更新时间：用同步当天的日期，确保"今日新增"统计准确
+        String updatedAt = java.time.LocalDate.now().toString();
 
         // 截止时间：优先 deadlineAt，否则用 deadlineText
         String deadline = "";
