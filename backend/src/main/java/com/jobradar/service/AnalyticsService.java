@@ -1,6 +1,8 @@
 package com.jobradar.service;
 
+import com.jobradar.entity.Job;
 import com.jobradar.entity.VisitLog;
+import com.jobradar.repository.JobRepository;
 import com.jobradar.repository.UserRepository;
 import com.jobradar.repository.VisitLogRepository;
 import org.springframework.stereotype.Service;
@@ -17,10 +19,13 @@ public class AnalyticsService {
 
     private final VisitLogRepository visitLogRepo;
     private final UserRepository userRepo;
+    private final JobRepository jobRepo;
 
-    public AnalyticsService(VisitLogRepository visitLogRepo, UserRepository userRepo) {
+    public AnalyticsService(VisitLogRepository visitLogRepo, UserRepository userRepo,
+                            JobRepository jobRepo) {
         this.visitLogRepo = visitLogRepo;
         this.userRepo = userRepo;
+        this.jobRepo = jobRepo;
     }
 
     /** 汇总卡片数据 */
@@ -151,6 +156,176 @@ public class AnalyticsService {
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("visits", visits);
+        return result;
+    }
+
+    /** 时段流量分布（24小时） */
+    @Transactional(readOnly = true)
+    public Map<String, Object> hourlyStats(int days) {
+        LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+
+        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetween(start, end);
+        Map<Integer, Long> hourCounts = logs.stream()
+                .collect(Collectors.groupingBy(
+                        v -> v.getCreatedAt().getHour(),
+                        Collectors.counting()
+                ));
+
+        // 补齐 24 小时
+        List<Map<String, Object>> hours = new ArrayList<>();
+        for (int h = 0; h < 24; h++) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("hour", String.format("%02d:00", h));
+            entry.put("count", hourCounts.getOrDefault(h, 0L));
+            hours.add(entry);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("days", days);
+        result.put("hours", hours);
+        return result;
+    }
+
+    /** 流量来源分布 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> sourceStats(int days) {
+        LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+
+        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetween(start, end);
+        Map<String, Long> sourceCounts = logs.stream()
+                .filter(v -> v.getSource() != null && !v.getSource().isBlank())
+                .collect(Collectors.groupingBy(VisitLog::getSource, Collectors.counting()));
+
+        // 确保三类来源都存在
+        for (String key : List.of("搜索引擎", "外部链接", "直接访问")) {
+            sourceCounts.putIfAbsent(key, 0L);
+        }
+
+        List<Map<String, Object>> sources = sourceCounts.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("source", e.getKey());
+                    m.put("count", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("days", days);
+        result.put("sources", sources);
+        return result;
+    }
+
+    /** 访问地区分布 Top10 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> regionStats(int days) {
+        LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+
+        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetween(start, end);
+        Map<String, Long> regionCounts = logs.stream()
+                .filter(v -> v.getRegion() != null && !v.getRegion().isBlank())
+                .map(v -> {
+                    // "中国-广东-深圳" → "广东"
+                    String[] parts = v.getRegion().split("-");
+                    return parts.length >= 2 ? parts[1] : parts[0];
+                })
+                .collect(Collectors.groupingBy(r -> r, Collectors.counting()));
+
+        List<Map<String, Object>> regions = regionCounts.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10)
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("region", e.getKey());
+                    m.put("count", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("days", days);
+        result.put("regions", regions);
+        return result;
+    }
+
+    /** 岗位数据库概览 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> jobsStats() {
+        String today = LocalDate.now().toString();
+        long totalJobs = jobRepo.count();
+        long openJobs = jobRepo.countOpen(today);
+        long expiredJobs = jobRepo.countExpired(today);
+        long distinctCompanies = jobRepo.countDistinctCo();
+        long todayNew = jobRepo.countByUpdatedAt(today);
+        String lastSync = jobRepo.maxUpdatedAt();
+
+        List<Job> allJobs = jobRepo.findAll();
+
+        // 按行业分组 Top10
+        List<Map<String, Object>> byIndustry = allJobs.stream()
+                .filter(j -> j.getIndustry() != null && !j.getIndustry().isBlank())
+                .collect(Collectors.groupingBy(Job::getIndustry, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10)
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("name", e.getKey());
+                    m.put("count", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+
+        // 按招聘类型分组
+        List<Map<String, Object>> byRecruitType = allJobs.stream()
+                .filter(j -> j.getRecruitType() != null && !j.getRecruitType().isBlank())
+                .collect(Collectors.groupingBy(Job::getRecruitType, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("name", e.getKey());
+                    m.put("count", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("totalJobs", totalJobs);
+        result.put("openJobs", openJobs);
+        result.put("expiredJobs", expiredJobs);
+        result.put("distinctCompanies", distinctCompanies);
+        result.put("todayNew", todayNew);
+        result.put("lastSync", lastSync != null ? lastSync : "");
+        result.put("byIndustry", byIndustry);
+        result.put("byRecruitType", byRecruitType);
+        return result;
+    }
+
+    /** 会员统计 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> memberStats() {
+        LocalDateTime now = LocalDateTime.now();
+        long totalUsers = userRepo.count();
+
+        long activeMembers = userRepo.findAll().stream()
+                .filter(u -> u.getMemberUntil() != null && u.getMemberUntil().isAfter(now))
+                .count();
+
+        long freeUsers = totalUsers - activeMembers;
+        double conversionRate = totalUsers > 0
+                ? Math.round(activeMembers * 10000.0 / totalUsers) / 100.0
+                : 0.0;
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("totalMembers", totalUsers);
+        result.put("activeMembers", activeMembers);
+        result.put("freeUsers", freeUsers);
+        result.put("conversionRate", conversionRate);
         return result;
     }
 

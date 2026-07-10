@@ -52,6 +52,36 @@ public class AnalyticsController {
         return analyticsService.users(Math.max(page, 0), Math.min(size, 100));
     }
 
+    /** 时段流量分布 */
+    @GetMapping("/hourly")
+    public Map<String, Object> hourly(@RequestParam(defaultValue = "7") int days) {
+        return analyticsService.hourlyStats(Math.min(days, 30));
+    }
+
+    /** 流量来源分布 */
+    @GetMapping("/sources")
+    public Map<String, Object> sources(@RequestParam(defaultValue = "30") int days) {
+        return analyticsService.sourceStats(Math.min(days, 90));
+    }
+
+    /** 访问地区分布 */
+    @GetMapping("/regions")
+    public Map<String, Object> regions(@RequestParam(defaultValue = "30") int days) {
+        return analyticsService.regionStats(Math.min(days, 90));
+    }
+
+    /** 岗位数据库概览 */
+    @GetMapping("/jobs-stats")
+    public Map<String, Object> jobsStats() {
+        return analyticsService.jobsStats();
+    }
+
+    /** 会员统计 */
+    @GetMapping("/members")
+    public Map<String, Object> members() {
+        return analyticsService.memberStats();
+    }
+
     /** 前端页面浏览上报 */
     @PostMapping("/ping")
     public ResponseEntity<Void> ping(@RequestBody Map<String, String> body, HttpServletRequest req) {

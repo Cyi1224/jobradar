@@ -25,6 +25,9 @@ public interface VisitLogRepository extends JpaRepository<VisitLog, Long> {
     /** 最近访问记录（按时间倒序） */
     List<VisitLog> findByCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime start, LocalDateTime end);
 
+    /** 按时间范围查询（按时间升序，用于时段分布分析） */
+    List<VisitLog> findByCreatedAtBetweenOrderByCreatedAtAsc(LocalDateTime start, LocalDateTime end);
+
     /** 去重 IP 计数（唯一访客） */
     @Query("SELECT COUNT(DISTINCT v.ip) FROM VisitLog v WHERE v.createdAt BETWEEN :start AND :end")
     long countDistinctIpByCreatedAtBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
