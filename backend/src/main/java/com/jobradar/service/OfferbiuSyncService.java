@@ -38,6 +38,10 @@ public class OfferbiuSyncService {
 
     /** 防止并发重复同步 */
     private final AtomicBoolean running = new AtomicBoolean(false);
+    /** 锁获取时间戳，用于超时看门狗 */
+    private volatile long lockAcquiredAt = 0;
+    /** 同步锁超时时间：超过此时间未释放则强制重置 */
+    private static final long LOCK_TIMEOUT_MS = 10 * 60_000; // 10 分钟
 
     public OfferbiuSyncService(RestTemplate restTemplate,
                                OfferbiuProperties properties,
@@ -96,10 +100,21 @@ public class OfferbiuSyncService {
      * 核心同步逻辑：只抓取每个招聘季最新几页做增量对比，不全量同步。
      */
     private SyncResult syncFromOfferbiu() {
+        // 超时看门狗：如果锁被持有超过 10 分钟，强制重置（防止线程卡死导致永久阻塞）
+        long lockHeldMs = System.currentTimeMillis() - lockAcquiredAt;
+        if (running.get() && lockHeldMs > LOCK_TIMEOUT_MS) {
+            log.error("[offerbiu-sync] ⚠️ 同步锁已持有 {} 秒未释放，强制重置！上次同步可能异常卡死",
+                    lockHeldMs / 1000);
+            running.set(false);
+            lockAcquiredAt = 0;
+        }
+
         if (!running.compareAndSet(false, true)) {
-            log.warn("[offerbiu-sync] 上一次同步尚未完成，跳过本次执行");
+            log.warn("[offerbiu-sync] 上一次同步尚未完成（已运行 {} 秒），跳过本次执行",
+                    (System.currentTimeMillis() - lockAcquiredAt) / 1000);
             return new SyncResult(0, 0, 0, 0);
         }
+        lockAcquiredAt = System.currentTimeMillis();
 
         Instant start = Instant.now();
         int totalFetched = 0;
@@ -177,6 +192,7 @@ public class OfferbiuSyncService {
             log.error("[offerbiu-sync] 同步过程异常: {}", e.getMessage(), e);
         } finally {
             running.set(false);
+            lockAcquiredAt = 0;
         }
 
         long durationSeconds = Duration.between(start, Instant.now()).getSeconds();
