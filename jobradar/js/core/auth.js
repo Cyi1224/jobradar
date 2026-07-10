@@ -24,7 +24,7 @@ async function post(path, body) {
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || data.error || `请求失败 ${res.status}`);
+  if (!res.ok) throw new Error(data.message || data.reason || data.error || `请求失败 ${res.status}`);
   return data;
 }
 

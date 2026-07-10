@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
  * 拦截规则：
  *   1. 空/缺失 User-Agent → 403
  *   2. 已知恶意 UA → 403
- *   3. 漏洞扫描路径 → 403
- *   4. 高频请求（同 IP 10 秒 > 30 次） → 临时封 5 分钟
+ *   3. 漏洞扫描路径 → 403 + 立即拉黑
+ *   4. 高频请求（同 IP 10 秒 > 60 次） → 3 次犯规后拉黑 5 分钟
  */
 @Component
 @Order(0)
@@ -53,9 +53,13 @@ public class BotFilter extends OncePerRequestFilter {
     private final Map<String, long[]> ipHitCounts = new ConcurrentHashMap<>();
     /** IP 临时黑名单: IP → 解封时间戳 */
     private final Map<String, Long> ipBlockUntil = new ConcurrentHashMap<>();
+    /** IP 高频犯规计数: IP → [计数窗口起始时间戳, 犯规次数] */
+    private final Map<String, long[]> ipStrikeCounts = new ConcurrentHashMap<>();
 
     private static final long HIT_WINDOW_MS = 10_000;    // 10 秒窗口
-    private static final int  HIT_MAX      = 30;          // 窗口内最大请求数
+    private static final int  HIT_MAX      = 60;          // 窗口内最大请求数（SPA 页面正常会并发多个 API）
+    private static final int  STRIKE_LIMIT = 3;           // 连续犯规次数阈值
+    private static final long STRIKE_WINDOW_MS = 5 * 60_000; // 犯规计数重置窗口
     private static final long BLOCK_MS     = 5 * 60_000;  // 封禁 5 分钟
 
     @Override
@@ -107,10 +111,16 @@ public class BotFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 5. 高频请求检测
+        // 5. 高频请求检测（3 次犯规才拉黑，避免 SPA 正常并发被误伤）
         if (isHighFrequency(ip)) {
-            logBlock(ip, path, "高频请求");
-            ipBlockUntil.put(ip, System.currentTimeMillis() + BLOCK_MS);
+            int strikes = recordStrike(ip);
+            if (strikes >= STRIKE_LIMIT) {
+                logBlock(ip, path, "高频请求(第" + strikes + "次犯规，已拉黑)");
+                ipBlockUntil.put(ip, System.currentTimeMillis() + BLOCK_MS);
+                reject(res, 403, "请求过于频繁，IP 已被临时封禁，请稍后再试");
+                return;
+            }
+            logBlock(ip, path, "高频请求(第" + strikes + "次警告)");
             reject(res, 429, "请求过于频繁，请稍后重试");
             return;
         }
@@ -125,6 +135,17 @@ public class BotFilter extends OncePerRequestFilter {
             if (now - w[0] > HIT_WINDOW_MS) { w[0] = now; w[1] = 0; }
             w[1]++;
             return w[1] > HIT_MAX;
+        }
+    }
+
+    /** 记录一次高频犯规，返回该 IP 在当前窗口内的犯规次数 */
+    private int recordStrike(String ip) {
+        long now = System.currentTimeMillis();
+        long[] s = ipStrikeCounts.computeIfAbsent(ip, k -> new long[]{ now, 0 });
+        synchronized (s) {
+            if (now - s[0] > STRIKE_WINDOW_MS) { s[0] = now; s[1] = 0; }
+            s[1]++;
+            return (int) s[1];
         }
     }
 
