@@ -9,6 +9,7 @@ services:
   mysql:
     image: mysql:8
     environment:
+      TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-jobradar123}
       MYSQL_DATABASE: ${DB_NAME:-jobradar}
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
@@ -25,6 +26,7 @@ services:
   backend:
     build: ./backend
     environment:
+      TZ: Asia/Shanghai
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: mysql
       DB_PORT: "3306"
@@ -42,6 +44,8 @@ services:
 
   frontend:
     image: nginx:alpine
+    environment:
+      TZ: Asia/Shanghai
     depends_on:
       - backend
     ports:
