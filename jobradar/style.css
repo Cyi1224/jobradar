@@ -1304,7 +1304,10 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   .dash-stat-card { padding: 12px; }
   .dash-stat-val { font-size: 22px; }
   .dash-stat-label { font-size: 11px; }
-  .dash-quick-btn { padding: 8px 6px; min-height: 40px; font-size: 11.5px; }
+  .dash-quick-btn { padding: 8px 4px; min-height: 40px; font-size: 11px; gap: 3px; }
+  .dash-quick-btn i { font-size: 16px; }
+  .dash-quick { gap: 5px; }
+  .dash-quick-btn span { display: inline !important; font-size: 11px; }
 
   /* ── 漏斗图手机端紧凑 ── */
   .funnel-row { gap: 6px; }
@@ -1314,8 +1317,54 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   /* ── 弹窗/模态框手机端满屏 ── */
   .ob-overlay-mobile .ob-card { max-width: 100%; border-radius: 0; min-height: 100svh; padding: 30px 20px; }
 
-  /* ── dashboard 快捷入口手机端优化 ── */
-  .dash-quick { gap: 6px; }
+  /* ════════ 简历编辑器：手机端垂直堆叠 ════════ */
+  .re-content { flex-direction: column !important; }
+  .re-panel {
+    width: 100% !important; flex-shrink: 0;
+    overflow-y: visible; border-right: none !important;
+    border-bottom: 1px solid var(--c-border);
+    padding: 10px 14px !important; max-height: 160px; overflow-y: auto;
+  }
+  .re-tpls { flex-wrap: wrap; gap: 4px; }
+  .re-tpl { font-size: 11px; padding: 4px 10px; border-radius: 14px; }
+  .re-group { margin-bottom: 8px; }
+  .re-group-title { font-size: 11px; margin-bottom: 4px; }
+  .re-ctrl { font-size: 11px; gap: 6px; }
+  .re-swatches { gap: 4px; }
+  .re-swatch { width: 20px; height: 20px; }
+  .re-toolbar { gap: 4px; flex-wrap: wrap; }
+  .re-toolbar .btn, .re-toolbar .btn.sm { font-size: 11px; padding: 4px 8px; min-height: 30px; }
+  .re-tbtn { width: 28px; height: 28px; font-size: 14px; }
+  .re-save-status { font-size: 10px; min-width: 36px; }
+
+  /* ════════ 添加岗位：隐藏侧边占位卡片 ════════ */
+  #page-addjob .two-col { grid-template-columns: 1fr !important; }
+  #page-addjob .two-col > div:last-child { display: none; }
+  .form-stack .field { margin-bottom: 8px; }
+  .form-stack .field label { font-size: 12px; }
+
+  /* ════════ 自动填充：紧凑上传区 + 表单堆叠 ════════ */
+  .af-upload-inner { padding: 20px 14px; }
+  .af-upload-icon { font-size: 36px; }
+  .af-upload-title { font-size: 15px; }
+  .af-upload-sub { font-size: 12px; }
+  .af-upload-btns { flex-direction: column; gap: 8px; }
+  .af-upload-btns .btn, .af-file-label { width: 100%; justify-content: center; }
+  .autofill-form .form-row { flex-direction: column; gap: 8px; }
+  .af-field { margin-bottom: 6px; }
+
+  /* ════════ AI 匹配：卡片紧凑 + 关键词栏换行 ─═ */
+  #aimatch-list > div:first-child { flex-wrap: wrap; gap: 4px; }
+  #aimatch-list .jdb-empty { padding: 24px 0 !important; }
+
+  /* ════════ 个人中心：表单全宽 ── */
+  #page-profile .form-row { flex-direction: column; gap: 8px; }
+  #page-profile .card:first-child { flex-direction: column; text-align: center; gap: 12px; }
+  #page-profile .card:first-child button { margin-left: 0 !important; width: 100%; }
+
+  /* ════════ 筛选tabs：横向滚动 ── */
+  .filter-row { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 0; }
+  .filter-row .tab { flex-shrink: 0; white-space: nowrap; font-size: 12px; padding: 8px 12px; }
 }
 
 /* ════════ 简历编辑器 ════════ */
