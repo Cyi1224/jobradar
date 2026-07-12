@@ -1193,13 +1193,23 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   .jdb-view-toggle { display: none; } /* 手机只显示卡片视图 */
   .jdb-count-info  { font-size: 12px; }
 
-  /* 手机端表格：水平滚动 + 首列固定（JS控制显隐） */
-  .jdb-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -14px; padding: 0 14px; }
-  #jobdb-table { min-width: 700px; }
-  #jobdb-table th:first-child,
-  #jobdb-table td:first-child { position: sticky; left: 0; background: var(--c-bg-0); z-index: 1; box-shadow: 2px 0 4px rgba(0,0,0,.04); }
-  /* 手机端恢复视图切换按钮 */
-  .jdb-view-toggle { display: flex !important; }
+  /* 手机端表格隐藏，仅展示卡片 */
+  #jobdb-table { display: none !important; }
+  .jdb-view-toggle { display: none !important; }
+
+  /* 卡片网格：紧凑间距，让更多卡片可见 */
+  .job-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+
+  /* 岗位卡片：紧凑版 */
+  .job-card { padding: 10px 12px !important; border-radius: 10px; }
+  .jc-co { font-size: 13px; }
+  .jc-pos { font-size: 12px; margin-bottom: 6px; }
+  .jc-meta { gap: 4px; flex-wrap: wrap; }
+  .jc-meta .badge, .jc-meta span { font-size: 10px !important; padding: 2px 7px !important; }
+  .jc-deadline { font-size: 10px; }
+  .jc-actions { flex-direction: row !important; gap: 6px; }
+  .jc-actions .btn { padding: 5px 10px !important; font-size: 11px !important; min-height: 30px; }
+  .job-card .badge.jobdb-new { font-size: 10px; padding: 1px 5px; }
 
   /* 卡片操作按钮纵向排列 */
   .jc-actions { flex-direction: column; gap: 7px; }

@@ -15,8 +15,8 @@ export function initJobdb() {
   let currentPage = 0, total = 0, totalPages = 0, capped = false;
   let items = [];
   let loading = false;
-  // 手机端默认表格视图，桌面端默认卡片视图
-  let view = (window.innerWidth <= 540) ? 'table' : 'card';
+  // 手机端和桌面端统一默认卡片视图
+  let view = 'card';
   let todayDate = '';
   let addedKeys = new Set();
 
