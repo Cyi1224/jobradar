@@ -97,7 +97,7 @@ export const mockRepo = {
 
   async add(entry) {
     const app = { id: nextId++, logs: [], note: '', ...entry };
-    if (app.status && app.status !== '未投递') {
+    if (app.status && app.status !== '未投递' && app.status !== '待投递') {
       app.logs.push({ s: app.status, time: nowStr(), note: '' });
     }
     apps.push(app);

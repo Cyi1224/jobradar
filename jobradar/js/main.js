@@ -62,18 +62,69 @@ function renderAccount() {
   }
 }
 
-/* ── 未登录拦截：除翻页外，点击任意内容弹登录 ── */
+/* ── 未登录拦截：校招库可自由浏览，加投递/其他操作需登录 ── */
 function guardAnonymousClicks() {
   document.addEventListener('click', (e) => {
     if (Auth.isLoggedIn()) return;
     if (e.target.closest('#auth-modal')) return;           // 弹窗内部正常交互
-    if (e.target.closest('.nav')) return;                  // 左侧导航栏：放行（可自由切换页面、登录/退出）
-    if (e.target.closest('[data-act="more"]')) return;     // 「加载更多」= 翻页，放行
-    // 其余（主内容区）任意点击 → 拦截并弹登录
+    if (e.target.closest('.nav')) return;                  // 导航栏：放行
+    if (e.target.closest('[data-act="more"]')) return;     // 「加载更多」：放行
+
+    // 校招信息库：浏览、筛选、翻页全部放行
+    if (e.target.closest('#page-jobdb')) return;
+
+    // 其余（加投递、改状态等操作）→ 拦截并弹登录
     e.preventDefault();
     e.stopPropagation();
     openAuth();
-  }, true); // 捕获阶段，抢在各业务点击处理前
+  }, true);
+}
+
+/* ── 新用户 3 步引导 ── */
+function showOnboarding() {
+  const steps = [
+    { icon: 'ti-search', title: '浏览校招信息', desc: '在「校招信息库」中按行业、城市、招聘类型筛选心仪岗位，点击「加入我的投递」' },
+    { icon: 'ti-send', title: '管理投递进度', desc: '在「我的投递」中跟踪每个岗位的状态：待投递 → 已投递 → 笔试 → 面试 → OC' },
+    { icon: 'ti-file-cv', title: '完善简历资料', desc: '在「我的简历」上传简历或使用编辑器，AI 匹配会根据你的专业推荐岗位' },
+  ];
+  let step = 0;
+  const overlay = document.createElement('div');
+  overlay.className = 'auth-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,41,0.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:999';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:36px 40px;max-width:420px;width:90%;text-align:center;box-shadow:0 18px 40px -12px rgba(15,23,41,0.2)">
+      <div style="font-size:48px;margin-bottom:12px" id="ob-icon"><i class="ti ti-search"></i></div>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:6px" id="ob-title">浏览校招信息</h2>
+      <p style="font-size:14px;color:#6b7280;margin-bottom:24px;min-height:40px" id="ob-desc">在「校招信息库」中按行业、城市筛选心仪岗位</p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px" id="ob-dots">
+        <span class="ob-dot active" style="width:8px;height:8px;border-radius:50%;background:var(--brand)"></span>
+        <span class="ob-dot" style="width:8px;height:8px;border-radius:50%;background:#E5E7EB"></span>
+        <span class="ob-dot" style="width:8px;height:8px;border-radius:50%;background:#E5E7EB"></span>
+      </div>
+      <button id="ob-next" style="width:100%;padding:10px;background:var(--brand-grad);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">下一步</button>
+      <button id="ob-skip" style="width:100%;padding:8px;margin-top:8px;background:none;border:none;color:#9CA3AF;font-size:13px;cursor:pointer">跳过，开始使用</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  function update() {
+    const s = steps[step];
+    document.getElementById('ob-icon').innerHTML = `<i class="ti ${s.icon}" style="font-size:48px;color:var(--brand)"></i>`;
+    document.getElementById('ob-title').textContent = s.title;
+    document.getElementById('ob-desc').textContent = s.desc;
+    document.getElementById('ob-next').textContent = step < 2 ? '下一步' : '开始使用';
+    overlay.querySelectorAll('.ob-dot').forEach((d, i) => {
+      d.style.background = i <= step ? 'var(--brand)' : '#E5E7EB';
+    });
+  }
+
+  document.getElementById('ob-next').addEventListener('click', () => {
+    if (step < 2) { step++; update(); }
+    else { overlay.remove(); location.reload(); }
+  });
+  document.getElementById('ob-skip').addEventListener('click', () => {
+    overlay.remove();
+    location.reload();
+  });
 }
 
 /* ── 登录 / 注册弹窗 ── */
@@ -153,7 +204,8 @@ function wireAuthModal() {
         await Auth.register(a, dnEl.value.trim(), p);
       }
       showToast('欢迎，' + (Auth.getUser() || a));
-      location.reload();
+      if (mode === 'register') showOnboarding();
+      else location.reload();
     } catch (err) {
       errEl.textContent = err.message || '操作失败，请重试';
       submit.disabled = false; submit.textContent = prev; busy = false;

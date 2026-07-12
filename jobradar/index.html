@@ -76,8 +76,8 @@
       <div class="nav-item"        data-page="dashboard"    role="menuitem"><i class="ti ti-layout-dashboard"></i>总览</div>
       <div class="nav-item"        data-page="applications" role="menuitem"><i class="ti ti-send"></i>我的投递</div>
       <div class="nav-item"        data-page="addjob"       role="menuitem"><i class="ti ti-plus"></i>添加岗位</div>
-      <div class="nav-item"        data-page="resume"       role="menuitem"><i class="ti ti-file-cv"></i>简历管理</div>
-      <div class="nav-item"        data-page="autofill"     role="menuitem"><i class="ti ti-forms"></i>自动填充</div>
+      <div class="nav-item"        data-page="resume"       role="menuitem"><i class="ti ti-file-cv"></i>我的简历</div>
+      <div class="nav-item"        data-page="autofill"     role="menuitem"><i class="ti ti-forms"></i>简历解析</div>
       <div class="nav-item"        data-page="optimize"     role="menuitem"><i class="ti ti-sparkles"></i>简历优化</div>
       <div class="nav-item"        data-page="aimatch"      role="menuitem"><i class="ti ti-cpu"></i>AI 匹配</div>
       <div class="nav-item"        data-page="review"       role="menuitem"><i class="ti ti-chart-pie"></i>投递复盘</div>
@@ -163,7 +163,7 @@
       </div>
       <div class="filter-row" role="tablist">
         <div class="tab on"  data-status="全部"   role="tab">全部   <span class="cnt" id="cnt-全部"></span></div>
-        <div class="tab"     data-status="未投递"  role="tab">未投递 <span class="cnt" id="cnt-未投递"></span></div>
+        <div class="tab"     data-status="未投递"  role="tab">待投递 <span class="cnt" id="cnt-未投递"></span></div>
         <div class="tab"     data-status="已投递"  role="tab">已投递 <span class="cnt" id="cnt-已投递"></span></div>
         <div class="tab"     data-status="已笔试"  role="tab">已笔试 <span class="cnt" id="cnt-已笔试"></span></div>
         <div class="tab"     data-status="已面试"  role="tab">已面试 <span class="cnt" id="cnt-已面试"></span></div>
@@ -175,12 +175,12 @@
           <div class="table-wrap">
             <table id="app-table">
               <colgroup>
-                <col style="width:110px"><col style="width:140px"><col style="width:80px">
+                <col style="width:36px"><col style="width:110px"><col style="width:140px"><col style="width:80px">
                 <col style="width:68px"><col style="width:100px"><col style="width:96px">
                 <col style="width:100px"><col style="width:72px">
               </colgroup>
               <thead>
-                <tr><th>公司</th><th>岗位</th><th>类型</th><th>城市</th><th>截止日期</th><th>当前状态</th><th>最后更新</th><th>操作</th></tr>
+                <tr><th></th><th>公司</th><th>岗位</th><th>类型</th><th>城市</th><th>截止日期</th><th>当前状态</th><th>最后更新</th><th>操作</th></tr>
               </thead>
               <tbody id="app-tbody"></tbody>
             </table>
@@ -361,7 +361,7 @@
                 <div class="field"><label>投递截止</label><input type="date" id="addjob-deadline"></div>
               </div>
               <div class="field"><label>投递链接</label><input type="url" id="addjob-link" placeholder="https://..."></div>
-              <div class="field"><label>初始状态</label><select id="addjob-status"><option>未投递</option><option>已投递</option></select></div>
+              <div class="field"><label>初始状态</label><select id="addjob-status"><option>待投递</option><option>未投递</option><option>已投递</option></select></div>
               <div class="field"><label>备注</label><input type="text" id="addjob-note" placeholder="内推码、HR 联系方式等"></div>
               <button class="btn primary full" id="addjob-save"><i class="ti ti-check"></i>保存到我的投递</button>
             </div>

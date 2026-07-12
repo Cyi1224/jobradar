@@ -20,7 +20,7 @@ function pct(a, b) {
 
 export function buildSummary(apps) {
   const total     = apps.length;
-  const submitted = apps.filter((a) => a.status !== '未投递').length;
+  const submitted = apps.filter((a) => a.status !== '未投递' && a.status !== '待投递').length;
   const exam      = apps.filter((a) => reached(a, '已笔试')).length;
   const interview = apps.filter((a) => reached(a, '已面试')).length;
   const oc        = apps.filter((a) => a.status === '已OC').length;

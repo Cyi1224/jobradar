@@ -12,13 +12,13 @@ import { switchPage } from '../core/router.js';
 
 /* ── 工具 ── */
 const $ = (id) => document.getElementById(id);
-const STATUS_ORDER = ['未投递','已投递','已笔试','已面试','已OC','已挂'];
+const STATUS_ORDER = ['待投递','已投递','已笔试','已面试','已OC','已挂'];
 const STATUS_COLOR = {
-  '未投递':'#9CA3AF','已投递':'#3B82F6','已笔试':'#8B5CF6',
+  '待投递':'#9CA3AF','未投递':'#9CA3AF','已投递':'#3B82F6','已笔试':'#8B5CF6',
   '已面试':'#10B981','已OC':'#059669','已挂':'#EF4444',
 };
 const STATUS_ICON = {
-  '未投递':'ti-clock','已投递':'ti-send','已笔试':'ti-writing',
+  '待投递':'ti-clock','未投递':'ti-clock','已投递':'ti-send','已笔试':'ti-writing',
   '已面试':'ti-users','已OC':'ti-trophy','已挂':'ti-x',
 };
 
@@ -48,7 +48,7 @@ async function renderStats(apps) {
   if (!el) return;
 
   const total     = apps.length;
-  const submitted = apps.filter((a) => a.status !== '未投递').length;
+  const submitted = apps.filter((a) => a.status !== '未投递' && a.status !== '待投递').length;
   const interview = apps.filter((a) => reached(a, '已面试')).length;
   const oc        = apps.filter((a) => a.status === '已OC').length;
   const urgent    = apps.filter((a) => isUrgent(a.deadline)).length;
@@ -86,7 +86,7 @@ async function renderFunnel(apps) {
   ];
   const counts = STAGES.map((s, i) =>
     i === 0
-      ? apps.filter((a) => a.status !== '未投递').length
+      ? apps.filter((a) => a.status !== '未投递' && a.status !== '待投递').length
       : apps.filter((a) => reached(a, s.key)).length
   );
   const max = Math.max(1, counts[0]);
@@ -319,9 +319,43 @@ async function renderAll() {
   ]);
 }
 
+/* ── 截止日期浏览器通知 ── */
+async function checkDeadlineAlerts() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    try { await Notification.requestPermission(); } catch (e) { /* 用户拒绝 */ }
+  }
+  if (Notification.permission !== 'granted') return;
+
+  try {
+    const apps = await Store.getAll().catch(() => []);
+    const today = new Date().toDateString();
+    // 避免重复通知（同一天同一通知只发一次）
+    const notified = JSON.parse(localStorage.getItem('jr_notified') || '{}');
+    const newNotified = { ...notified };
+
+    apps.filter(a => a.status !== '已OC' && a.status !== '已挂').forEach(a => {
+      if (!a.deadline || a.deadline === '招满为止') return;
+      const diff = Math.ceil((new Date(a.deadline) - new Date()) / 86400000);
+      if (diff <= 3 && diff >= 0 && !notified[`${a.id}-${a.deadline}`]) {
+        const urgency = diff === 0 ? '今天截止' : diff === 1 ? '明天截止' : `${diff} 天后截止`;
+        new Notification(`⏰ ${a.co} · ${a.pos}`, {
+          body: `${urgency}：${a.deadline}${a.city ? ' · ' + a.city : ''}`,
+          icon: '/favicon.ico',
+          tag: `deadline-${a.id}`,
+        });
+        newNotified[`${a.id}-${a.deadline}`] = today;
+      }
+    });
+    localStorage.setItem('jr_notified', JSON.stringify(newNotified));
+  } catch (e) { /* 静默 */ }
+}
+
 export function initDashboard() {
   renderAll();
   renderRecommend();
   renderTodayPill();
-  on(EVT.APPS_CHANGED, renderAll);
+  on(EVT.APPS_CHANGED, () => { renderAll(); checkDeadlineAlerts(); });
+  // 启动时检查一次
+  setTimeout(checkDeadlineAlerts, 3000);
 }

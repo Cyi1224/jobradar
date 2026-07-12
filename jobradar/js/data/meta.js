@@ -6,6 +6,7 @@
 /* ── 状态元数据（图标 / 徽章样式 / 主色）── */
 export const STATUS_META = {
   '未投递': { icon: 'ti-clock',   badge: 'b-gray',   color: '#888780' },
+  '待投递': { icon: 'ti-clock',   badge: 'b-gray',   color: '#888780' },
   '已投递': { icon: 'ti-send',    badge: 'b-blue',   color: '#1A56DB' },
   '已笔试': { icon: 'ti-pencil',  badge: 'b-amber',  color: '#BA7517' },
   '已面试': { icon: 'ti-users',   badge: 'b-purple', color: '#534AB7' },
@@ -16,7 +17,8 @@ export const STATUS_META = {
 
 /* ── 状态选项（用于状态选择 UI）── */
 export const STATUS_OPTS = [
-  { s: '未投递', icon: 'ti-clock',  desc: '尚未提交'   },
+  { s: '待投递', icon: 'ti-clock',  desc: '尚未提交'   },
+  { s: '未投递', icon: 'ti-clock',  desc: '尚未提交'   },  // 兼容旧数据
   { s: '已投递', icon: 'ti-send',   desc: '已提交简历'  },
   { s: '已笔试', icon: 'ti-pencil', desc: '完成笔试'   },
   { s: '已面试', icon: 'ti-users',  desc: '进入面试'   },
@@ -26,4 +28,4 @@ export const STATUS_OPTS = [
 ];
 
 /* ── 流程节点（不含 已挂 / 暂缓）── */
-export const FLOW = ['未投递', '已投递', '已笔试', '已面试', '已OC'];
+export const FLOW = ['待投递', '已投递', '已笔试', '已面试', '已OC'];

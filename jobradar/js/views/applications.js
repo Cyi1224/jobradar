@@ -9,9 +9,22 @@ import { STATUS_META, STATUS_OPTS, FLOW } from '../data/meta.js';
 import { formatDeadline, isUrgent } from '../core/format.js';
 import { showToast } from '../core/toast.js';
 import { on, emit, EVT } from '../core/bus.js';
+import { ResumeDocStore } from '../data/resumedoc.js';
+
+/* 检测用户是否有简历，无则提示 */
+async function checkResumePrompt() {
+  try {
+    const doc = await ResumeDocStore.load().catch(() => null);
+    const hasResume = doc && doc.sections && doc.sections.some(s => s.items && s.items.length > 0);
+    if (!hasResume) {
+      showToast('💡 建议先上传简历或填写简历，方便记录投递信息', 5000);
+    }
+  } catch (e) { /* 静默 */ }
+}
 
 export function initApplications() {
   let currentFilter = '全部';
+  let selectedIds = new Set();  // 批量操作选中项
 
   /* 抽屉状态 */
   const modal       = document.getElementById('status-modal');
@@ -39,30 +52,41 @@ export function initApplications() {
     const all = await Store.getAll();
     const data = currentFilter === '全部'
       ? all
-      : all.filter((a) => a.status === currentFilter);
+      : currentFilter === '未投递'
+        ? all.filter((a) => a.status === '未投递' || a.status === '待投递')
+        : all.filter((a) => a.status === currentFilter);
 
     const tbody = document.getElementById('app-tbody');
     if (!tbody) return;
 
     if (!data.length) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--c-text-2);font-size:13px">
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--c-text-2);font-size:13px">
         <i class="ti ti-inbox" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4"></i>暂无记录
       </td></tr>`;
       return;
     }
 
     tbody.innerHTML = data.map((a) => {
-      const m = STATUS_META[a.status] || STATUS_META['未投递'];
+      const m = STATUS_META[a.status] || STATUS_META['待投递'];
       const urgent = isUrgent(a.deadline);
       const lastLog = a.logs.length ? a.logs[a.logs.length - 1].time.split(' ')[0] : '—';
+      const checked = selectedIds.has(a.id) ? 'checked' : '';
+      const statusOpts = STATUS_OPTS.map(o =>
+        `<option value="${o.s}" ${a.status === o.s || (o.s === '未投递' && a.status === '待投递') ? 'selected' : ''}>${o.s}</option>`
+      ).join('');
       return `
         <tr class="data-row" data-id="${a.id}">
+          <td><input type="checkbox" class="batch-cb" data-id="${a.id}" ${checked} style="width:16px;height:16px;cursor:pointer;accent-color:var(--brand)"></td>
           <td><span style="font-weight:500">${a.co}</span></td>
-          <td style="color:var(--c-text-2)">${a.pos}</td>
+          <td style="color:var(--c-text-2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.pos}">${a.pos}</td>
           <td><span class="badge ${a.type.includes('实习') ? 'b-teal' : 'b-gray'}">${a.type}</span></td>
           <td>${a.city}</td>
           <td style="${urgent ? 'color:var(--red);font-weight:500' : ''}">${formatDeadline(a.deadline)}</td>
-          <td><span class="badge ${m.badge}"><i class="ti ${m.icon}" style="font-size:11px;margin-right:3px"></i>${a.status}</span></td>
+          <td>
+            <select class="quick-status" data-id="${a.id}" style="padding:3px 24px 3px 6px;border-radius:6px;border:1px solid var(--c-border-2);font-size:12px;font-family:var(--font-body);cursor:pointer;background:var(--c-bg-0);max-width:90px">
+              ${statusOpts}
+            </select>
+          </td>
           <td style="color:var(--c-text-2)">${lastLog}</td>
           <td>
             <button class="icon-btn edit-btn" data-id="${a.id}" aria-label="编辑 ${a.co} 状态">
@@ -98,6 +122,75 @@ export function initApplications() {
         showToast('已删除');
       });
     });
+
+    /* 快速修改状态 */
+    tbody.querySelectorAll('.quick-status').forEach((sel) => {
+      sel.addEventListener('click', (e) => e.stopPropagation());
+      sel.addEventListener('change', async (e) => {
+        const id = Number(sel.dataset.id);
+        const newStatus = sel.value;
+        const app = await Store.getById(id);
+        if (!app || newStatus === app.status) return;
+        // 标记已投递时检测简历
+        if (newStatus === '已投递') checkResumePrompt();
+        await Store.updateStatus(id, newStatus, { note: app.note || '' });
+        emit(EVT.APPS_CHANGED);
+        showToast(`状态已更新：${app.co} → ${newStatus}`);
+      });
+    });
+
+    /* 批量复选框 */
+    tbody.querySelectorAll('.batch-cb').forEach((cb) => {
+      cb.addEventListener('click', (e) => e.stopPropagation());
+      cb.addEventListener('change', () => {
+        const id = Number(cb.dataset.id);
+        cb.checked ? selectedIds.add(id) : selectedIds.delete(id);
+        updateBatchBar();
+      });
+    });
+  }
+
+  /* 批量操作栏 */
+  function updateBatchBar() {
+    let bar = document.getElementById('batch-bar');
+    if (selectedIds.size === 0) {
+      if (bar) bar.remove();
+      return;
+    }
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'batch-bar';
+      bar.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 16px;margin-bottom:12px;background:var(--brand-light);border-radius:8px;font-size:13px;color:var(--c-text-1)';
+      bar.innerHTML = `
+        <span id="batch-count">已选 ${selectedIds.size} 项</span>
+        <select id="batch-status" style="padding:4px 8px;border-radius:6px;border:1px solid var(--c-border-2);font-size:12px;font-family:var(--font-body)">
+          <option value="">批量标记为…</option>
+          ${STATUS_OPTS.map(o => `<option value="${o.s}">${o.s}</option>`).join('')}
+        </select>
+        <button id="batch-apply" style="padding:4px 12px;background:var(--brand);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">应用</button>
+        <button id="batch-clear" style="padding:4px 12px;background:var(--c-bg-0);color:var(--c-text-2);border:1px solid var(--c-border-2);border-radius:6px;cursor:pointer;font-size:12px">取消</button>
+      `;
+      const tableCard = document.querySelector('#applications-page .chart-card') || document.getElementById('app-tbody').closest('.page');
+      if (tableCard) tableCard.insertBefore(bar, tableCard.firstChild);
+      // 批量状态应用
+      document.getElementById('batch-apply').addEventListener('click', async () => {
+        const newStatus = document.getElementById('batch-status').value;
+        if (!newStatus) return;
+        for (const id of selectedIds) {
+          const app = await Store.getById(id);
+          if (app) await Store.updateStatus(id, newStatus, { note: app.note || '' });
+        }
+        selectedIds.clear();
+        emit(EVT.APPS_CHANGED);
+        showToast(`已批量更新 ${selectedIds.size} 条记录 → ${newStatus}`);
+        selectedIds.clear();
+      });
+      document.getElementById('batch-clear').addEventListener('click', () => {
+        selectedIds.clear();
+        emit(EVT.APPS_CHANGED);
+      });
+    }
+    document.getElementById('batch-count').textContent = `已选 ${selectedIds.size} 项`;
   }
 
   /* Tab 筛选 */
@@ -193,7 +286,7 @@ export function initApplications() {
     grid.innerHTML = STATUS_OPTS.map((o) => `
       <div class="status-opt${draftStatus === o.s ? ' selected' : ''}"
            data-s="${o.s}" role="button" aria-pressed="${draftStatus === o.s}" aria-label="${o.s}">
-        <span class="s-icon"><i class="ti ${o.icon}" style="font-size:18px;color:${(STATUS_META[o.s] || STATUS_META['未投递']).color}"></i></span>
+        <span class="s-icon"><i class="ti ${o.icon}" style="font-size:18px;color:${(STATUS_META[o.s] || STATUS_META['待投递']).color}"></i></span>
         <div class="s-name">${o.s}</div>
         <div class="s-desc">${o.desc}</div>
       </div>`).join('');
@@ -328,7 +421,7 @@ export function initApplications() {
       return;
     }
     el.innerHTML = app.logs.map((l) => {
-      const m = STATUS_META[l.s] || STATUS_META['未投递'];
+      const m = STATUS_META[l.s] || STATUS_META['待投递'];
       const dotCls = l.s === '已挂' ? 'red' : l.s === '已OC' ? 'green' : '';
       return `
         <div class="tl-item">

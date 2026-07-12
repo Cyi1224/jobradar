@@ -29,7 +29,7 @@ export function initAddjob() {
       type:     val('addjob-type') || '秋招',
       city:     val('addjob-city') || '—',
       deadline: val('addjob-deadline') || '招满为止',
-      status:   val('addjob-status') || '未投递',
+      status:   val('addjob-status') || '待投递',
       note:     val('addjob-note'),
     };
 

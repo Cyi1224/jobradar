@@ -3,6 +3,7 @@
  */
 import { JobStore, JOB_BADGE } from '../data/catalog.js';
 import { Store } from '../data/store.js';
+import { Auth } from '../core/auth.js';
 import { emit, on, EVT } from '../core/bus.js';
 import { showToast } from '../core/toast.js';
 
@@ -248,13 +249,19 @@ export function initJobdb() {
 
   /* ── 「加入我的投递」 ── */
   async function addToApplications(job) {
+    // 未登录先弹窗
+    if (!Auth.isLoggedIn()) {
+      document.getElementById('auth-modal').style.display = 'flex';
+      document.getElementById('auth-account')?.focus();
+      return;
+    }
     const k = key(job.co, job.positions);
     if (addedKeys.has(k)) return;
     addedKeys.add(k);
     render();
     await Store.add({
       co: job.co, pos: job.positions, type: job.recruitType || '秋招',
-      city: job.city || '—', deadline: job.deadline || '招满为止', status: '未投递',
+      city: job.city || '—', deadline: job.deadline || '招满为止', status: '待投递',
       note: job.applyUrl ? `投递入口：${job.applyUrl}` : '',
     });
     emit(EVT.APPS_CHANGED);
