@@ -47,6 +47,9 @@ export function initApplications() {
     });
   }
 
+  /* 检测是否为移动端 */
+  function isMobile() { return window.innerWidth <= 540; }
+
   /* ════════ 列表渲染 ════════ */
   async function renderTable() {
     const all = await Store.getAll();
@@ -57,7 +60,88 @@ export function initApplications() {
         : all.filter((a) => a.status === currentFilter);
 
     const tbody = document.getElementById('app-tbody');
+    const tableEl = document.getElementById('app-table');
     if (!tbody) return;
+
+    // 手机端切换为卡片视图
+    if (isMobile()) {
+      if (tableEl) tableEl.style.display = 'none';
+      let cardContainer = document.getElementById('app-mobile-cards');
+      if (!cardContainer) {
+        cardContainer = document.createElement('div');
+        cardContainer.id = 'app-mobile-cards';
+        tbody.closest('.table-wrap').appendChild(cardContainer);
+      }
+      if (!data.length) {
+        cardContainer.innerHTML = `<div class="dash-empty-tip" style="padding:30px"><i class="ti ti-inbox" style="font-size:28px;opacity:.4"></i>暂无记录</div>`;
+        return;
+      }
+      cardContainer.innerHTML = data.map((a) => {
+        const m = STATUS_META[a.status] || STATUS_META['待投递'];
+        const urgent = isUrgent(a.deadline);
+        const statusOpts = STATUS_OPTS.map(o =>
+          `<option value="${o.s}" ${a.status === o.s || (o.s === '未投递' && a.status === '待投递') ? 'selected' : ''}>${o.s}</option>`
+        ).join('');
+        return `
+        <div class="app-mobile-card" data-id="${a.id}" style="background:var(--c-bg-0);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm);border:1px solid var(--c-border)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:14px;margin-bottom:2px">${a.co}</div>
+              <div style="font-size:12px;color:var(--c-text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.pos}</div>
+            </div>
+            <select class="quick-status" data-id="${a.id}" style="padding:4px 22px 4px 8px;border-radius:8px;border:1px solid var(--c-border);font-size:12px;font-family:var(--font-body);cursor:pointer;background:var(--c-bg-0);margin-left:8px">
+              ${statusOpts}
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+            <span class="badge ${a.type.includes('实习')?'b-teal':'b-gray'}" style="font-size:11px">${a.type}</span>
+            <span style="font-size:11px;color:var(--c-text-2)">${a.city}</span>
+            <span style="font-size:11px;${urgent?'color:var(--red);font-weight:500':''}">📅 ${formatDeadline(a.deadline)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--c-text-3)">${a.logs.length ? a.logs[a.logs.length-1].time.split(' ')[0] : '—'}</span>
+            <div style="display:flex;gap:6px">
+              <button class="icon-btn edit-btn" data-id="${a.id}" style="width:32px;height:32px;border:1px solid var(--c-border);border-radius:8px;background:var(--c-bg-0);cursor:pointer" aria-label="编辑"><i class="ti ti-edit" style="font-size:14px"></i></button>
+              <button class="icon-btn del-btn" data-id="${a.id}" style="width:32px;height:32px;border:1px solid var(--c-border);border-radius:8px;background:var(--c-bg-0);cursor:pointer;color:var(--red)" aria-label="删除"><i class="ti ti-trash" style="font-size:14px"></i></button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      // 绑定卡片事件
+      cardContainer.querySelectorAll('.quick-status').forEach(sel => {
+        sel.addEventListener('click', e => e.stopPropagation());
+        sel.addEventListener('change', async e => {
+          const id = Number(sel.dataset.id);
+          const app = await Store.getById(id);
+          if (!app || sel.value === app.status) return;
+          if (sel.value === '已投递') checkResumePrompt();
+          await Store.updateStatus(id, sel.value, { note: app.note || '' });
+          emit(EVT.APPS_CHANGED);
+          showToast(`状态已更新 → ${sel.value}`);
+        });
+      });
+      cardContainer.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); openModal(Number(btn.dataset.id)); });
+      });
+      cardContainer.querySelectorAll('.del-btn').forEach(btn => {
+        btn.addEventListener('click', async e => {
+          e.stopPropagation();
+          if (!confirm('确定删除？')) return;
+          await Store.remove(Number(btn.dataset.id));
+          emit(EVT.APPS_CHANGED);
+          showToast('已删除');
+        });
+      });
+      cardContainer.querySelectorAll('.app-mobile-card').forEach(card => {
+        card.addEventListener('click', () => openModal(Number(card.dataset.id)));
+      });
+      return;
+    }
+
+    // 桌面端：恢复表格，隐藏卡片
+    if (tableEl) tableEl.style.display = '';
+    const cardContainer = document.getElementById('app-mobile-cards');
+    if (cardContainer) cardContainer.remove();
 
     if (!data.length) {
       tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--c-text-2);font-size:13px">
@@ -467,6 +551,13 @@ export function initApplications() {
 
   /* 投递数据变化（本页或「添加岗位」触发）时刷新列表与计数 */
   on(EVT.APPS_CHANGED, () => { updateCounts(); renderTable(); });
+
+  /* 窗口大小变化时重新渲染 */
+  let resizeDebounce;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeDebounce);
+    resizeDebounce = setTimeout(renderTable, 200);
+  });
 
   /* ════════ 初始化 ════════ */
   updateCounts();
