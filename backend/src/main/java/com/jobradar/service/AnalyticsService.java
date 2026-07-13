@@ -1,8 +1,10 @@
 package com.jobradar.service;
 
 import com.jobradar.entity.Job;
+import com.jobradar.entity.SyncLog;
 import com.jobradar.entity.VisitLog;
 import com.jobradar.repository.JobRepository;
+import com.jobradar.repository.SyncLogRepository;
 import com.jobradar.repository.UserRepository;
 import com.jobradar.repository.VisitLogRepository;
 import org.springframework.stereotype.Service;
@@ -20,12 +22,14 @@ public class AnalyticsService {
     private final VisitLogRepository visitLogRepo;
     private final UserRepository userRepo;
     private final JobRepository jobRepo;
+    private final SyncLogRepository syncLogRepo;
 
     public AnalyticsService(VisitLogRepository visitLogRepo, UserRepository userRepo,
-                            JobRepository jobRepo) {
+                            JobRepository jobRepo, SyncLogRepository syncLogRepo) {
         this.visitLogRepo = visitLogRepo;
         this.userRepo = userRepo;
         this.jobRepo = jobRepo;
+        this.syncLogRepo = syncLogRepo;
     }
 
     /** 汇总卡片数据 */
@@ -326,6 +330,80 @@ public class AnalyticsService {
         result.put("activeMembers", activeMembers);
         result.put("freeUsers", freeUsers);
         result.put("conversionRate", conversionRate);
+        return result;
+    }
+
+    /** 同步历史记录 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> syncHistory(int days) {
+        LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+
+        List<SyncLog> logs = syncLogRepo.findBySyncTimeBetweenOrderBySyncTimeDesc(start, end);
+
+        // 按天聚合
+        Map<LocalDate, List<SyncLog>> byDay = logs.stream()
+                .collect(Collectors.groupingBy(l -> l.getSyncTime().toLocalDate()));
+
+        List<Map<String, Object>> daysList = new ArrayList<>();
+        for (LocalDate d = LocalDate.now().minusDays(days - 1); !d.isAfter(LocalDate.now()); d = d.plusDays(1)) {
+            List<SyncLog> dayLogs = byDay.getOrDefault(d, List.of());
+            long successCount = dayLogs.stream().filter(l -> "SUCCESS".equals(l.getStatus())).count();
+            long failureCount = dayLogs.stream().filter(l -> "FAILURE".equals(l.getStatus())).count();
+            int totalInserted = dayLogs.stream().mapToInt(SyncLog::getInserted).sum();
+            String status = dayLogs.isEmpty() ? "NONE" : failureCount > 0 ? "PARTIAL" : "SUCCESS";
+            String errorMsg = dayLogs.stream()
+                    .filter(l -> l.getErrorMessage() != null)
+                    .map(SyncLog::getErrorMessage)
+                    .findFirst().orElse(null);
+
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("date", d.toString());
+            entry.put("status", status);
+            entry.put("inserted", totalInserted);
+            entry.put("successCount", successCount);
+            entry.put("failureCount", failureCount);
+            if (errorMsg != null) entry.put("error", errorMsg);
+            daysList.add(entry);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("days", days);
+        result.put("history", daysList);
+        return result;
+    }
+
+    /** 每日活跃用户（DAU）—— 登录用户访问数 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> dailyActiveUsers(int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay();
+
+        // 从 visit_log 按天聚合去重 user_id
+        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetween(start, end);
+        Map<LocalDate, Long> dauByDay = logs.stream()
+                .filter(v -> v.getUserId() != null)
+                .collect(Collectors.groupingBy(
+                        v -> v.getCreatedAt().toLocalDate(),
+                        Collectors.mapping(VisitLog::getUserId, Collectors.toSet())
+                ))
+                .entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> (long) e.getValue().size()));
+
+        // 补齐空缺日期
+        List<Map<String, Object>> dauList = new ArrayList<>();
+        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("date", d.toString());
+            entry.put("count", dauByDay.getOrDefault(d, 0L));
+            dauList.add(entry);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("days", days);
+        result.put("dau", dauList);
         return result;
     }
 

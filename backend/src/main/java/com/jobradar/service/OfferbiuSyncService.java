@@ -5,6 +5,8 @@ import com.jobradar.dto.JobSyncReq;
 import com.jobradar.dto.offerbiu.OfferbiuPostingItem;
 import com.jobradar.dto.offerbiu.OfferbiuPostingResponse;
 import com.jobradar.dto.offerbiu.OfferbiuSeasonResponse;
+import com.jobradar.entity.SyncLog;
+import com.jobradar.repository.SyncLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -16,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,6 +38,7 @@ public class OfferbiuSyncService {
     private final RestTemplate restTemplate;
     private final OfferbiuProperties properties;
     private final JobService jobService;
+    private final SyncLogRepository syncLogRepo;
 
     /** 防止并发重复同步 */
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -45,10 +49,12 @@ public class OfferbiuSyncService {
 
     public OfferbiuSyncService(RestTemplate restTemplate,
                                OfferbiuProperties properties,
-                               JobService jobService) {
+                               JobService jobService,
+                               SyncLogRepository syncLogRepo) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.jobService = jobService;
+        this.syncLogRepo = syncLogRepo;
     }
 
     /**
@@ -65,7 +71,7 @@ public class OfferbiuSyncService {
                     Thread.currentThread().interrupt();
                     return;
                 }
-                SyncResult result = syncFromOfferbiu();
+                SyncResult result = syncFromOfferbiu("STARTUP");
                 log.info("[offerbiu-sync] 首次同步完成：拉取 {} 条，新增 {} 条，跳过 {} 条，耗时 {} 秒",
                         result.fetched, result.inserted, result.skipped, result.durationSeconds);
             }, "offerbiu-init-sync").start();
@@ -82,7 +88,7 @@ public class OfferbiuSyncService {
         if (properties.getSync().isEnabled()) {
             log.info("[offerbiu-sync] 定时同步触发...");
             new Thread(() -> {
-                SyncResult result = syncFromOfferbiu();
+                SyncResult result = syncFromOfferbiu("SCHEDULED");
                 log.info("[offerbiu-sync] 定时同步完成：拉取 {} 条，新增 {} 条，跳过 {} 条，耗时 {} 秒",
                         result.fetched, result.inserted, result.skipped, result.durationSeconds);
             }, "offerbiu-scheduled-sync").start();
@@ -93,13 +99,13 @@ public class OfferbiuSyncService {
      * 公开方法：手动触发同步（供 admin 端点调用）。同步执行，返回结果。
      */
     public SyncResult syncNow() {
-        return syncFromOfferbiu();
+        return syncFromOfferbiu("MANUAL");
     }
 
     /**
      * 核心同步逻辑：只抓取每个招聘季最新几页做增量对比，不全量同步。
      */
-    private SyncResult syncFromOfferbiu() {
+    private SyncResult syncFromOfferbiu(String triggerType) {
         // 超时看门狗：如果锁被持有超过 10 分钟，强制重置（防止线程卡死导致永久阻塞）
         long lockHeldMs = System.currentTimeMillis() - lockAcquiredAt;
         if (running.get() && lockHeldMs > LOCK_TIMEOUT_MS) {
@@ -188,8 +194,33 @@ public class OfferbiuSyncService {
                 }
             }
 
+            // 记录成功日志
+            try {
+                SyncLog successLog = new SyncLog();
+                successLog.setSyncTime(LocalDateTime.now());
+                successLog.setStatus("SUCCESS");
+                successLog.setFetched(totalFetched);
+                successLog.setInserted(totalInserted);
+                successLog.setSkipped(totalSkipped);
+                successLog.setDurationSeconds((int) Duration.between(start, Instant.now()).getSeconds());
+                successLog.setTriggerType(triggerType);
+                syncLogRepo.save(successLog);
+            } catch (Exception ignored) {}
+
         } catch (Exception e) {
             log.error("[offerbiu-sync] 同步过程异常: {}", e.getMessage(), e);
+            // 记录失败日志
+            try {
+                SyncLog failLog = new SyncLog();
+                failLog.setSyncTime(LocalDateTime.now());
+                failLog.setStatus("FAILURE");
+                failLog.setFetched(totalFetched);
+                failLog.setInserted(totalInserted);
+                failLog.setSkipped(totalSkipped);
+                failLog.setErrorMessage(e.getMessage() != null ? e.getMessage().substring(0, Math.min(e.getMessage().length(), 500)) : "未知错误");
+                failLog.setTriggerType(triggerType);
+                syncLogRepo.save(failLog);
+            } catch (Exception ignored) {}
         } finally {
             running.set(false);
             lockAcquiredAt = 0;

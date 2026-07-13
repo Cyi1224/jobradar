@@ -82,6 +82,18 @@ public class AnalyticsController {
         return analyticsService.memberStats();
     }
 
+    /** 同步历史 */
+    @GetMapping("/sync-history")
+    public Map<String, Object> syncHistory(@RequestParam(defaultValue = "30") int days) {
+        return analyticsService.syncHistory(Math.min(days, 90));
+    }
+
+    /** 每日活跃用户 */
+    @GetMapping("/dau")
+    public Map<String, Object> dau(@RequestParam(defaultValue = "30") int days) {
+        return analyticsService.dailyActiveUsers(Math.min(days, 90));
+    }
+
     /** 前端页面浏览上报 */
     @PostMapping("/ping")
     public ResponseEntity<Void> ping(@RequestBody Map<String, String> body, HttpServletRequest req) {
