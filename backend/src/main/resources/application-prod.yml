@@ -49,6 +49,6 @@ offerbiu:
   sync:
     enabled: true
     cron: "0 0 6,12 * * ?"     # 每天 6:00 和 12:00
-    max-pages: 3               # 每个招聘季只抓最新 3 页做增量
+    max-pages: 10              # 每个招聘季抓前 10 页（覆盖更多新增岗位）
     page-size: 100
     page-delay-ms: 200
