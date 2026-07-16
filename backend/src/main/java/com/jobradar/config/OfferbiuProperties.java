@@ -40,7 +40,7 @@ public class OfferbiuProperties {
         private String cron = "0 0 6 * * ?";
 
         /** 每个招聘季最多拉取页数（只取最新几页做增量，不全量同步） */
-        private int maxPages = 3;
+        private int maxPages = 10;
 
         /** 每页拉取条数 */
         private int pageSize = 100;

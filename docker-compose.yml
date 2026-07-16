@@ -36,6 +36,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-strong-32byte-random-secret-string}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8123}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-change-me-to-a-strong-admin-key}
+      OFFERBIU_SYNC_MAXPAGES: 10
     depends_on:
       mysql:
         condition: service_healthy
