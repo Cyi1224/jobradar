@@ -48,6 +48,20 @@ initProfile();
 renderAccount();
 wireAuthModal();
 guardAnonymousClicks();
+initResumeShowcase();
+
+/* 简历模板展示条：关闭后不再显示 */
+function initResumeShowcase() {
+  const bar = document.getElementById('resume-showcase');
+  const closeBtn = document.getElementById('resume-showcase-close');
+  if (!bar || !closeBtn) return;
+  if (localStorage.getItem('jr_showcase_closed')) { bar.style.display = 'none'; return; }
+  closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    bar.style.display = 'none';
+    localStorage.setItem('jr_showcase_closed', '1');
+  });
+}
 
 /* ── 侧栏底部：登录态切换 ── */
 function renderAccount() {

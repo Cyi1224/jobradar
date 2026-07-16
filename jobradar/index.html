@@ -253,7 +253,7 @@
           <div class="jdb-hero-row">
             <div>
               <h1 class="jdb-hero-title">每天更新校招岗位，不用再到处<span class="jdb-hero-accent">找信息</span></h1>
-              <p class="jdb-hero-sub">覆盖校招、实习、补录、提前批和常用公司入口，筛选后可以一键加入我的投递继续跟进。</p>
+              <p class="jdb-hero-sub">覆盖校招、实习、补录、提前批和常用公司入口，筛选后可一键加入我的投递。内置 9 套精选简历模板，在线制作导出 PDF。</p>
             </div>
             <button class="btn primary jdb-hero-btn" data-goto="addjob"><i class="ti ti-plus"></i>手动添加岗位</button>
           </div>
@@ -265,6 +265,34 @@
           <div class="stat-card"><div class="stat-label">校招信息</div><div class="stat-val purple" id="jdb-stat-total">0</div><div class="stat-note">覆盖多届招聘信息</div></div>
           <div class="stat-card"><div class="stat-label">可投岗位</div><div class="stat-val green"  id="jdb-stat-open">0</div><div class="stat-note" id="jdb-stat-open-note">选中后加入我的投递</div></div>
           <div class="stat-card clickable" id="jdb-stat-today-card" title="点击筛选今日新增岗位"><div class="stat-label">今日新增 <i class="ti ti-filter" style="font-size:11px;opacity:.6"></i></div><div class="stat-val orange" id="jdb-stat-today">0</div><div class="stat-note" id="jdb-stat-today-note">今日新增已入库</div></div>
+        </div>
+
+        <!-- 简历模板展示条 -->
+        <div id="resume-showcase" class="card" style="padding:16px 20px;margin-bottom:12px;background:linear-gradient(135deg,#F8FAFC,#EEF2FF);border:1px solid #C7D2FE;border-radius:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <span style="font-size:24px">📄</span>
+              <div>
+                <div style="font-weight:600;font-size:14px;color:var(--c-text-1)">在线制作简历 · <span style="color:var(--brand);font-weight:700">9 套精选模板</span></div>
+                <div style="font-size:12px;color:var(--c-text-2);margin-top:2px">
+                  <span class="resume-tpl-tag">LaTeX</span>
+                  <span class="resume-tpl-tag">学术</span>
+                  <span class="resume-tpl-tag">Awesome</span>
+                  <span class="resume-tpl-tag">经典</span>
+                  <span class="resume-tpl-tag">现代</span>
+                  <span class="resume-tpl-tag">极简</span>
+                  <span class="resume-tpl-tag">ATS友好</span>
+                  <span class="resume-tpl-tag">时间线</span>
+                  <span class="resume-tpl-tag">北欧</span>
+                </div>
+                <div style="font-size:12px;color:var(--c-text-3);margin-top:4px">选模板 → 填内容 → 导出 PDF，<b>3 分钟搞定一份好简历</b></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="btn primary" data-goto="resume"><i class="ti ti-file-cv"></i>开始制作</button>
+              <button class="icon-btn" id="resume-showcase-close" title="关闭" style="color:#9CA3AF"><i class="ti ti-x" style="font-size:14px"></i></button>
+            </div>
+          </div>
         </div>
 
         <!-- Feature strip -->

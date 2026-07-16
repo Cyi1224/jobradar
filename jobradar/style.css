@@ -606,6 +606,13 @@ tr.data-row:hover td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
 .jdb-feat b { display: block; font-size: 12.5px; }
 .jdb-feat span { font-size: 11px; color: var(--c-text-3); }
 
+/* 简历模板标签 */
+.resume-tpl-tag {
+  display: inline-block; padding: 1px 8px; border-radius: 10px;
+  background: #fff; border: 1px solid var(--c-border);
+  font-size: 11px; color: var(--c-text-2); white-space: nowrap;
+}
+
 /* ── 筛选卡 ── */
 .jdb-filter-card { padding: 16px 18px; }
 .jdb-tabs-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -1160,6 +1167,11 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
 
   /* 岗位卡片：单列 */
   .job-grid { grid-template-columns: 1fr !important; }
+
+  /* 简历展示条：手机端紧凑 */
+  #resume-showcase { padding: 10px 12px !important; }
+  #resume-showcase .resume-tpl-tag { font-size: 10px; padding: 1px 6px; }
+  #resume-showcase .btn.primary { font-size: 12px; padding: 6px 12px; min-height: 34px; }
 
   /* Hero 区：手机端大幅精简，让岗位信息直接可见 */
   .jdb-hero { padding: 12px 14px !important; margin-bottom: 0; border-radius: 0; }
