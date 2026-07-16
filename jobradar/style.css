@@ -1168,7 +1168,12 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   .jdb-hero-title { font-size: 16px !important; margin-bottom: 2px; }
   .jdb-hero-sub   { display: none; }
   .jdb-hero-row   { flex-direction: column; gap: 6px; }
-  .jdb-hero-btn   { display: none; }
+  .jdb-hero-btn   { width: auto; font-size: 12px !important; padding: 6px 12px !important; min-height: 34px; }
+
+  /* 简历横幅：手机紧凑 */
+  #resume-banner { padding: 10px 12px !important; gap: 8px; }
+  #resume-banner > div:first-of-type { font-size: 13px !important; }
+  #resume-banner > div:nth-of-type { font-size: 11px !important; }
 
   /* Feature strip：手机端完全隐藏 */
   .jdb-strip { display: none !important; }

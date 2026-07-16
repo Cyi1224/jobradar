@@ -48,6 +48,26 @@ initProfile();
 renderAccount();
 wireAuthModal();
 guardAnonymousClicks();
+initResumeBanner();
+
+/* 简历引导横幅：关闭后 7 天内不再显示 */
+function initResumeBanner() {
+  const banner = document.getElementById('resume-banner');
+  const closeBtn = document.getElementById('resume-banner-close');
+  if (!banner || !closeBtn) return;
+  // 已关闭则不再显示
+  if (localStorage.getItem('jr_resume_banner_closed')) {
+    const closedAt = parseInt(localStorage.getItem('jr_resume_banner_closed'));
+    if (Date.now() - closedAt < 7 * 86400000) { banner.style.display = 'none'; return; }
+    localStorage.removeItem('jr_resume_banner_closed');
+  }
+  closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    banner.style.display = 'none';
+    localStorage.setItem('jr_resume_banner_closed', Date.now().toString());
+  });
+}
 
 /* ── 侧栏底部：登录态切换 ── */
 function renderAccount() {

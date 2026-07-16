@@ -255,7 +255,10 @@
               <h1 class="jdb-hero-title">每天更新校招岗位，不用再到处<span class="jdb-hero-accent">找信息</span></h1>
               <p class="jdb-hero-sub">覆盖校招、实习、补录、提前批和常用公司入口，筛选后可以一键加入我的投递继续跟进。</p>
             </div>
-            <button class="btn primary jdb-hero-btn" data-goto="addjob"><i class="ti ti-plus"></i>手动添加岗位</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn primary jdb-hero-btn" data-goto="addjob"><i class="ti ti-plus"></i>手动添加岗位</button>
+              <button class="btn jdb-hero-btn" data-goto="resume" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)"><i class="ti ti-file-cv"></i>制作简历</button>
+            </div>
           </div>
         </div>
 
@@ -274,8 +277,19 @@
             <div class="jdb-feat"><i class="ti ti-refresh"></i><div><b>每日更新</b><span>当日新增抢先看</span></div></div>
             <div class="jdb-feat"><i class="ti ti-briefcase"></i><div><b>海量岗位</b><span>覆盖企业广</span></div></div>
             <div class="jdb-feat"><i class="ti ti-filter"></i><div><b>精准筛选</b><span>快速定位机会</span></div></div>
-            <div class="jdb-feat"><i class="ti ti-circle-plus"></i><div><b>一键加入投递</b><span>高效管理投递</span></div></div>
+            <div class="jdb-feat"><i class="ti ti-file-cv"></i><div><b>智能简历</b><span>上传/编辑，AI 匹配岗位</span></div></div>
           </div>
+        </div>
+
+        <!-- 简历引导横幅 -->
+        <div id="resume-banner" class="card" style="padding:12px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#EEF2FF,#F3F0FF);border:1px solid #C7D2FE;border-radius:10px;margin-bottom:10px;cursor:pointer" data-goto="resume">
+          <div style="width:40px;height:40px;border-radius:10px;background:var(--brand);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-file-cv" style="font-size:20px;color:#fff"></i></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px;color:var(--c-text-1)">打造专属简历，让 AI 帮你匹配合适岗位</div>
+            <div style="font-size:12px;color:var(--c-text-2)">上传简历自动识别信息，AI 智能匹配校招岗位</div>
+          </div>
+          <i class="ti ti-arrow-right" style="color:var(--brand);font-size:18px"></i>
+          <button class="icon-btn" id="resume-banner-close" style="flex-shrink:0;margin-left:-4px" title="关闭"><i class="ti ti-x" style="font-size:14px;color:#9CA3AF"></i></button>
         </div>
 
         <!-- Filter card -->
