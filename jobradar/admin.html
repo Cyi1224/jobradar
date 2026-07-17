@@ -48,6 +48,13 @@ body{
   transition:background .2s;
 }
 .navbar .nav-right button:hover{ background:rgba(255,255,255,0.25); }
+.sync-badge{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;
+  font-size:12px;font-weight:600;
+}
+.sync-badge.ok{ background:#ECFDF5; color:#059669; }
+.sync-badge.warn{ background:#FFFBEB; color:#D97706; }
+.sync-badge.err{ background:#FEF2F2; color:#DC2626; }
 .navbar .live-dot{
   display:inline-block; width:8px; height:8px; border-radius:50%; background:#10B981;
   margin-right:6px; animation:pulse 2s infinite;
@@ -183,6 +190,7 @@ tr:hover td{ background:var(--brand-light); }
 <nav class="navbar">
   <h1>📊 JobRadar 数据看板</h1>
   <div class="nav-right">
+    <span class="sync-badge" id="syncBadge" title="今日同步状态">⏳ 检测中</span>
     <span class="live-dot"></span><span class="last-update" id="lastUpdate">加载中…</span>
     <select id="dayRange">
       <option value="7">最近 7 天</option>
@@ -469,6 +477,7 @@ async function refreshAll() {
     renderJobIndustryChart(jobsStats);
     renderJobRecruitChart(jobsStats);
     renderSyncChart(syncHistory);
+    renderSyncBadge(syncHistory);
     renderDauChart(dauData);
     await loadUsers(0);
 
@@ -757,6 +766,33 @@ function renderRegionsChart(data) {
     }
   });
   document.getElementById('chartRegions').parentElement.style.height = '320px';
+}
+
+// ── 同步状态检测 ──
+function renderSyncBadge(data) {
+  const badge = document.getElementById('syncBadge');
+  if (!badge) return;
+  const history = data.history || [];
+  // 检查最近3天
+  const recent = history.slice(-3);
+  const hasFailure = recent.some(d => d.status === 'FAILURE');
+  const hasNone = recent.some(d => d.status === 'NONE');
+  const todayHasData = recent.length > 0 && recent[recent.length - 1].status === 'SUCCESS';
+
+  if (hasFailure) {
+    badge.className = 'sync-badge err';
+    badge.innerHTML = '\u{1F6D1} 同步异常';
+    badge.title = '最近3天存在同步失败，请检查';
+  } else if (!todayHasData) {
+    badge.className = 'sync-badge warn';
+    badge.innerHTML = '⚠️ 今日未同步';
+    badge.title = '今天尚未完成同步，请检查';
+  } else {
+    const today = recent[recent.length - 1];
+    badge.className = 'sync-badge ok';
+    badge.innerHTML = '✅ 同步正常';
+    badge.title = '今日已同步 ' + today.inserted + ' 条新岗位';
+  }
 }
 
 // ── 同步历史柱状图 ──
@@ -1114,12 +1150,14 @@ function startAutoRefresh() {
   autoRefreshTimer = setInterval(async () => {
     if (!getApiKey()) return;
     try {
-      const [summary, jobsStats, members] = await Promise.all([
+      const [summary, jobsStats, members, syncHistory] = await Promise.all([
         apiGet('/api/admin/analytics/summary'),
         apiGet('/api/admin/analytics/jobs-stats'),
         apiGet('/api/admin/analytics/members'),
+        apiGet('/api/admin/analytics/sync-history?days=3'),
       ]);
       renderSummary(summary, jobsStats, members);
+      renderSyncBadge(syncHistory);
       const now = new Date();
       document.getElementById('lastUpdate').textContent =
         '更新于 ' + now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
