@@ -7,6 +7,7 @@
  */
 import { CONFIG } from './config.js';
 import { Auth } from './core/auth.js';
+window.Auth = Auth;  // 暴露给全局，供 inline onclick 使用
 import { initRouter } from './core/router.js';
 import { initDashboard } from './views/dashboard.js';
 import { initApplications } from './views/applications.js';

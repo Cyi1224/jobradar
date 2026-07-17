@@ -81,7 +81,7 @@ export function initJobdb() {
         <div class="jc-pos"><i class="ti ti-briefcase"></i><span>${esc(j.positions)}</span></div>
         <div class="jc-actions">
           ${j.applyUrl
-            ? `<a class="btn jc-apply" href="${esc(j.applyUrl)}" target="_blank" rel="noopener" data-apply="${esc(j.applyUrl)}"><i class="ti ti-external-link"></i>投递入口</a>`
+            ? `<a class="btn jc-apply" href="${esc(j.applyUrl)}" target="_blank" rel="noopener" onclick="if(!window.Auth||!window.Auth.isLoggedIn()){event.preventDefault();document.getElementById('auth-modal').style.display='flex';document.getElementById('auth-account')?.focus();return false;}"><i class="ti ti-external-link"></i>投递入口</a>`
             : `<button class="btn jc-apply" disabled><i class="ti ti-external-link"></i>暂无入口</button>`}
           <button class="btn primary jc-add" data-add="${j.id}" ${added ? 'disabled' : ''}>
             <i class="ti ti-${added ? 'check' : 'circle-plus'}"></i>${added ? '已加入' : '加入我的投递'}
@@ -105,7 +105,7 @@ export function initJobdb() {
         <td>${esc(j.positions)}</td>
         <td class="${dc.urgent ? 'jdb-urgent' : ''}">${esc(dc.text)}</td>
         <td style="white-space:nowrap">
-          ${j.applyUrl ? `<a class="btn sm" href="${esc(j.applyUrl)}" target="_blank" rel="noopener" title="打开投递页" data-apply="${esc(j.applyUrl)}"><i class="ti ti-external-link"></i>投递</a>` : ''}
+          ${j.applyUrl ? `<a class="btn sm" href="${esc(j.applyUrl)}" target="_blank" rel="noopener" title="打开投递页" onclick="if(!window.Auth||!window.Auth.isLoggedIn()){event.preventDefault();document.getElementById('auth-modal').style.display='flex';return false;}"><i class="ti ti-external-link"></i>投递</a>` : ''}
           <button class="btn sm primary" data-add="${j.id}" ${added ? 'disabled' : ''}><i class="ti ti-${added ? 'check' : 'circle-plus'}"></i>${added ? '已加入' : '加入'}</button>
         </td>
       </tr>`;
