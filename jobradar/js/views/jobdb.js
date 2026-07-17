@@ -81,7 +81,9 @@ export function initJobdb() {
         <div class="jc-pos"><i class="ti ti-briefcase"></i><span>${esc(j.positions)}</span></div>
         <div class="jc-actions">
           ${j.applyUrl
-            ? `<button class="btn jc-apply jc-apply-btn" data-url="${esc(j.applyUrl)}"><i class="ti ti-external-link"></i>投递入口</button>`
+            ? (Auth.isLoggedIn()
+              ? `<button class="btn jc-apply jc-apply-btn" data-url="${esc(j.applyUrl)}"><i class="ti ti-external-link"></i>投递入口</button>`
+              : `<button class="btn jc-apply" onclick="document.getElementById('auth-modal').style.display='flex'"><i class="ti ti-lock"></i>登录后查看</button>`)
             : `<button class="btn jc-apply" disabled><i class="ti ti-external-link"></i>暂无入口</button>`}
           <button class="btn primary jc-add" data-add="${j.id}" ${added ? 'disabled' : ''}>
             <i class="ti ti-${added ? 'check' : 'circle-plus'}"></i>${added ? '已加入' : '加入我的投递'}
@@ -105,7 +107,9 @@ export function initJobdb() {
         <td>${esc(j.positions)}</td>
         <td class="${dc.urgent ? 'jdb-urgent' : ''}">${esc(dc.text)}</td>
         <td style="white-space:nowrap">
-          ${j.applyUrl ? `<button class="btn sm jc-apply-btn" data-url="${esc(j.applyUrl)}" style="white-space:nowrap"><i class="ti ti-external-link"></i>投递</button>` : ''}
+          ${j.applyUrl ? (Auth.isLoggedIn()
+            ? `<button class="btn sm jc-apply-btn" data-url="${esc(j.applyUrl)}" style="white-space:nowrap"><i class="ti ti-external-link"></i>投递</button>`
+            : `<button class="btn sm" onclick="document.getElementById('auth-modal').style.display='flex'" style="white-space:nowrap;color:var(--brand)"><i class="ti ti-lock"></i>登录查看</button>`) : ''}
           <button class="btn sm primary" data-add="${j.id}" ${added ? 'disabled' : ''}><i class="ti ti-${added ? 'check' : 'circle-plus'}"></i>${added ? '已加入' : '加入'}</button>
         </td>
       </tr>`;
@@ -320,16 +324,11 @@ export function initJobdb() {
     if (chip) { const c = chip.dataset.chip; filters[c] = !filters[c]; chip.classList.toggle('active', filters[c]); applyFilters(); return; }
     const vb = e.target.closest('.jdb-view');
     if (vb && vb.dataset.view !== view) { view = vb.dataset.view; pageEl.querySelectorAll('.jdb-view').forEach((b) => b.classList.toggle('active', b === vb)); render(); }
-    // 投递入口按钮：未登录弹窗，已登录打开链接
+    // 投递入口：已登录时打开链接
     const applyBtn = e.target.closest('.jc-apply-btn');
     if (applyBtn) {
-      if (!Auth.isLoggedIn()) {
-        document.getElementById('auth-modal').style.display = 'flex';
-        document.getElementById('auth-account')?.focus();
-      } else {
-        const url = applyBtn.dataset.url;
-        if (url) window.open(url, '_blank', 'noopener');
-      }
+      const url = applyBtn.dataset.url;
+      if (url) window.open(url, '_blank', 'noopener');
       return;
     }
   });
