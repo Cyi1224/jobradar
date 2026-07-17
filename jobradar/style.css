@@ -1377,6 +1377,12 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   /* ════════ 筛选tabs：横向滚动 ── */
   .filter-row { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 0; }
   .filter-row .tab { flex-shrink: 0; white-space: nowrap; font-size: 12px; padding: 8px 12px; }
+
+  /* 注册引导横幅和CTA手机端紧凑 */
+  #reg-banner { padding: 12px 14px !important; }
+  #reg-banner > div:first-child { font-size: 13px !important; }
+  #reg-cta { padding: 16px 14px !important; }
+  #reg-cta > div:nth-child(2) { font-size: 14px !important; }
 }
 
 /* ════════ 简历编辑器 ════════ */

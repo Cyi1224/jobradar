@@ -32,7 +32,7 @@
     <div class="auth-brand"><div class="nav-logo"><svg width="20" height="20" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="14" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/><circle cx="17" cy="17" r="9.5" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><circle cx="17" cy="17" r="5" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.40)" stroke-width="1"/><path d="M17,17 L17,3 A14,14 0 0,1 29.1,10 Z" fill="rgba(255,255,255,0.18)"/><circle cx="24" cy="10.5" r="1.2" fill="#fff"/><circle cx="10" cy="23" r="0.9" fill="#f97316"/><circle cx="17" cy="17" r="1" fill="#fff"/></svg></div><div class="auth-brand-name">职雷 JobRadar</div></div>
     <div class="auth-title" id="auth-title">登录</div>
     <div class="auth-sub" id="auth-sub">登录后即可管理你的投递、简历与资料</div>
-    <div class="auth-field auth-reg-only"><label>用户名</label><input type="text" id="auth-displayname" autocomplete="name" placeholder="任意字符，最长 15 位" maxlength="15"></div>
+    <div class="auth-field" style="display:none"><label>用户名</label><input type="text" id="auth-displayname" autocomplete="name" placeholder="任意字符，最长 15 位" maxlength="15"></div>
     <div class="auth-field"><label>账号</label><input type="text" id="auth-account" autocomplete="username" placeholder="仅数字和英文字母"></div>
     <div class="auth-field"><label>密码</label><input type="password" id="auth-password" autocomplete="new-password" placeholder="数字、英文或符号，至少 6 位"></div>
     <div class="auth-field auth-reg-only"><label>确认密码</label><input type="password" id="auth-password2" autocomplete="new-password" placeholder="请再次输入密码"></div>
@@ -246,9 +246,9 @@
             <line x1="362" y1="78"  x2="78"  y2="362" stroke="#2563eb" stroke-width=".5"/>
             <path d="M220,220 L220,20 A200,200 0 0,1 393,110 Z" fill="#2563eb" fill-opacity=".06"/>
           </svg>
-          <div class="jdb-hero-tag">
-            <span class="jdb-hero-tag-dot"></span>
-            <span id="jdb-hero-tag-count">每天自动更新</span>
+          <div class="jdb-hero-tag" style="display:flex;gap:12px;flex-wrap:wrap">
+            <span><span class="jdb-hero-tag-dot"></span><span id="jdb-hero-tag-count">每天自动更新</span></span>
+            <span style="color:rgba(255,255,255,0.6);font-size:12px" id="jdb-hero-users"></span>
           </div>
           <div class="jdb-hero-row">
             <div>

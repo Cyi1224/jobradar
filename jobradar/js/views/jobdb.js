@@ -224,6 +224,49 @@ export function initJobdb() {
     renderPagination(topPager);
     renderPagination(footer);
     updateBannerCount();
+    // 未登录浏览到第3页时弹出注册引导，或底部常驻CTA
+    if (!Auth.isLoggedIn()) {
+      if (currentPage >= 3) showRegBanner();
+      showRegCTA(total);
+    }
+  }
+
+  /* 第3页注册引导横幅 */
+  function showRegBanner() {
+    if (document.getElementById('reg-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'reg-banner';
+    banner.style.cssText = 'padding:16px 20px;margin-bottom:12px;background:linear-gradient(135deg,#EEF2FF,#F0FDF4);border:1px solid #A7F3D0;border-radius:12px;text-align:center';
+    banner.innerHTML = '<div style="font-weight:600;font-size:14px;margin-bottom:4px">📋 看到第 ' + (currentPage + 1) + ' 页了！</div>' +
+      '<div style="font-size:13px;color:var(--c-text-2);margin-bottom:10px">注册后可无限浏览全部 ' + total + ' 个校招岗位，还能管理投递进度</div>' +
+      '<button class="btn primary" data-auth-open style="padding:8px 24px;font-size:14px;border-radius:8px">立即注册 · 免费使用</button>';
+    const container = document.getElementById('jdb-footer') || document.querySelector('#page-jobdb .content') || document.getElementById('page-jobdb');
+    if (container) {
+      const cardsEl = document.getElementById('jobdb-cards');
+      if (cardsEl && cardsEl.nextSibling) {
+        cardsEl.parentNode.insertBefore(banner, cardsEl.nextSibling);
+      } else {
+        container.appendChild(banner);
+      }
+    }
+  }
+
+  /* 未登录底部CTA卡片 */
+  function showRegCTA(totalJobs) {
+    if (document.getElementById('reg-cta')) return;
+    const cta = document.createElement('div');
+    cta.id = 'reg-cta';
+    cta.style.cssText = 'padding:24px 20px;margin-top:16px;background:linear-gradient(135deg,var(--brand),#6366F1);border-radius:12px;text-align:center;color:#fff';
+    cta.innerHTML = '<div style="font-size:24px;margin-bottom:6px">📊</div>' +
+      '<div style="font-size:16px;font-weight:700;margin-bottom:4px">加入 ' + totalJobs + ' 个校招岗位的管理</div>' +
+      '<div style="font-size:13px;opacity:0.85;margin-bottom:12px">一键追踪投递进度，AI 匹配推荐，在线制作简历</div>' +
+      '<button class="btn" data-auth-open style="background:#fff;color:var(--brand);padding:10px 32px;font-size:14px;font-weight:600;border-radius:8px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1)">免费注册</button>';
+    const footer = document.getElementById('jdb-footer');
+    if (footer) footer.parentNode.insertBefore(cta, footer);
+    else {
+      const page = document.getElementById('page-jobdb');
+      if (page) page.appendChild(cta);
+    }
   }
 
   /* ── 拉取当前页 ── */

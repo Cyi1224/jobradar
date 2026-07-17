@@ -133,11 +133,10 @@ function showOnboarding() {
 
   document.getElementById('ob-next').addEventListener('click', () => {
     if (step < 2) { step++; update(); }
-    else { overlay.remove(); location.reload(); }
+    else { overlay.remove(); }
   });
   document.getElementById('ob-skip').addEventListener('click', () => {
     overlay.remove();
-    location.reload();
   });
 }
 
@@ -200,10 +199,7 @@ function wireAuthModal() {
     if (!p) { errEl.textContent = '请输入密码'; passEl.focus(); return; }
 
     if (mode === 'register') {
-      const dn = dnEl.value.trim();
       const p2 = pass2El.value;
-      if (!dn) { errEl.textContent = '请输入用户名'; dnEl.focus(); return; }
-      if (dn.length > 15) { errEl.textContent = '用户名长度不能超过 15 位'; dnEl.focus(); return; }
       if (p.length < 6 || p.length > 64) { errEl.textContent = '密码长度需在 6–64 位之间'; passEl.focus(); return; }
       if (!/^[\x21-\x7E]+$/.test(p)) { errEl.textContent = '密码只能使用数字、英文或符号'; passEl.focus(); return; }
       if (p !== p2) { errEl.textContent = '两次输入的密码不一致'; pass2El.focus(); return; }
@@ -214,12 +210,17 @@ function wireAuthModal() {
     try {
       if (mode === 'login') {
         await Auth.login(a, p);
+        closeAuth();
+        renderAccount();
+        showToast('欢迎回来，' + (Auth.getUser() || a));
       } else {
-        await Auth.register(a, dnEl.value.trim(), p);
+        // 注册：账号即昵称
+        await Auth.register(a, a, p);
+        closeAuth();
+        renderAccount();
+        showToast('注册成功！欢迎，' + a);
+        showOnboarding();
       }
-      showToast('欢迎，' + (Auth.getUser() || a));
-      if (mode === 'register') showOnboarding();
-      else location.reload();
     } catch (err) {
       errEl.textContent = err.message || '操作失败，请重试';
       submit.disabled = false; submit.textContent = prev; busy = false;
