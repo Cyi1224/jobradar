@@ -81,7 +81,7 @@ export function initJobdb() {
         <div class="jc-pos"><i class="ti ti-briefcase"></i><span>${esc(j.positions)}</span></div>
         <div class="jc-actions">
           ${j.applyUrl
-            ? `<a class="btn jc-apply" href="${esc(j.applyUrl)}" target="_blank" rel="noopener"><i class="ti ti-external-link"></i>投递入口</a>`
+            ? `<a class="btn jc-apply" href="${esc(j.applyUrl)}" target="_blank" rel="noopener" data-apply="${esc(j.applyUrl)}"><i class="ti ti-external-link"></i>投递入口</a>`
             : `<button class="btn jc-apply" disabled><i class="ti ti-external-link"></i>暂无入口</button>`}
           <button class="btn primary jc-add" data-add="${j.id}" ${added ? 'disabled' : ''}>
             <i class="ti ti-${added ? 'check' : 'circle-plus'}"></i>${added ? '已加入' : '加入我的投递'}
@@ -105,7 +105,7 @@ export function initJobdb() {
         <td>${esc(j.positions)}</td>
         <td class="${dc.urgent ? 'jdb-urgent' : ''}">${esc(dc.text)}</td>
         <td style="white-space:nowrap">
-          ${j.applyUrl ? `<a class="btn sm" href="${esc(j.applyUrl)}" target="_blank" rel="noopener" title="打开投递页"><i class="ti ti-external-link"></i>投递</a>` : ''}
+          ${j.applyUrl ? `<a class="btn sm" href="${esc(j.applyUrl)}" target="_blank" rel="noopener" title="打开投递页" data-apply="${esc(j.applyUrl)}"><i class="ti ti-external-link"></i>投递</a>` : ''}
           <button class="btn sm primary" data-add="${j.id}" ${added ? 'disabled' : ''}><i class="ti ti-${added ? 'check' : 'circle-plus'}"></i>${added ? '已加入' : '加入'}</button>
         </td>
       </tr>`;
@@ -320,6 +320,13 @@ export function initJobdb() {
     if (chip) { const c = chip.dataset.chip; filters[c] = !filters[c]; chip.classList.toggle('active', filters[c]); applyFilters(); return; }
     const vb = e.target.closest('.jdb-view');
     if (vb && vb.dataset.view !== view) { view = vb.dataset.view; pageEl.querySelectorAll('.jdb-view').forEach((b) => b.classList.toggle('active', b === vb)); render(); }
+    // 未登录点投递入口 → 先弹登录
+    const applyLink = e.target.closest('.jc-apply[data-apply]');
+    if (applyLink && !Auth.isLoggedIn()) {
+      e.preventDefault();
+      document.getElementById('auth-modal').style.display = 'flex';
+      document.getElementById('auth-account')?.focus();
+    }
   });
 
   let searchTimer;
