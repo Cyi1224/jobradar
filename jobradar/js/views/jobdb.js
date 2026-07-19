@@ -81,7 +81,9 @@ export function initJobdb() {
         <div class="jc-pos"><i class="ti ti-briefcase"></i><span>${esc(j.positions)}</span></div>
         <div class="jc-actions">
           ${j.applyUrl
-            ? `<button class="btn jc-apply jc-apply-btn" data-url="${esc(j.applyUrl)}"><i class="ti ti-external-link"></i>投递入口</button>`
+            ? (!Auth.isLoggedIn()
+              ? `<button class="btn jc-apply jc-apply-btn" data-url="${esc(j.applyUrl)}" style="position:relative"><i class="ti ti-external-link"></i>投递入口<span style="font-size:10px;opacity:.7;margin-left:2px">（免费用${Auth.freeApplyLeft()}次）</span></button>`
+              : `<button class="btn jc-apply jc-apply-btn" data-url="${esc(j.applyUrl)}"><i class="ti ti-external-link"></i>投递入口</button>`)
             : `<button class="btn jc-apply" disabled><i class="ti ti-external-link"></i>暂无入口</button>`}
           <button class="btn primary jc-add" data-add="${j.id}" ${added ? 'disabled' : ''}>
             <i class="ti ti-${added ? 'check' : 'circle-plus'}"></i>${added ? '已加入' : '加入我的投递'}
@@ -322,17 +324,18 @@ export function initJobdb() {
     if (chip) { const c = chip.dataset.chip; filters[c] = !filters[c]; chip.classList.toggle('active', filters[c]); applyFilters(); return; }
     const vb = e.target.closest('.jdb-view');
     if (vb && vb.dataset.view !== view) { view = vb.dataset.view; pageEl.querySelectorAll('.jdb-view').forEach((b) => b.classList.toggle('active', b === vb)); render(); }
-    // 投递入口：未登录弹窗，已登录打开外链
+    // 投递入口：未登录每天3次免费，用完弹登录
     const applyBtn = e.target.closest('.jc-apply-btn');
     if (applyBtn) {
       e.preventDefault();
       e.stopPropagation();
-      if (window.Auth && window.Auth.isLoggedIn()) {
-        const url = applyBtn.dataset.url;
-        if (url) window.open(url, '_blank', 'noopener');
-      } else {
-        const modal = document.getElementById('auth-modal');
-        if (modal) { modal.style.display = 'flex'; document.getElementById('auth-account')?.focus(); }
+      var url = applyBtn.dataset.url;
+      if (url) {
+        if (!window.Auth || !window.Auth.isLoggedIn()) {
+          window.Auth.tryFreeApply(url);
+        } else {
+          window.open(url, '_blank', 'noopener');
+        }
       }
       return;
     }

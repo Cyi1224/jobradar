@@ -175,7 +175,7 @@ export function initAimatch() {
                 ${r.applyUrl
                   ? (window.Auth && window.Auth.isLoggedIn()
                     ? `<a class="match-apply-link" href="${r.applyUrl}" target="_blank" rel="noopener"><i class="ti ti-send"></i>立即投递</a>`
-                    : `<button class="match-apply-link" onclick="document.getElementById('auth-modal').style.display='flex'" style="border:none;cursor:pointer;font-size:12px"><i class="ti ti-lock"></i>登录投递</button>`)
+                    : `<a class="match-apply-link" href="javascript:void(0)" onclick="window.Auth.tryFreeApply('${r.applyUrl.replace(/'/g, "\\'")}')" style="font-size:12px"><i class="ti ti-send"></i>投递(${window.Auth.freeApplyLeft()}次)</a>`)
                   : ''}
               </div>
             </div>

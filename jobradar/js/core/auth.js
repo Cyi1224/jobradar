@@ -50,6 +50,18 @@ const authHttp = {
 
 const adapter = CONFIG.USE_MOCK ? authMock : authHttp;
 
+/* 未登录用户免费使用投递入口次数 */
+var _freeApplyKey = 'jr_free_apply';
+function getFreeApplyCount() {
+  var d = JSON.parse(localStorage.getItem(_freeApplyKey) || '{}');
+  var today = new Date().toDateString();
+  if (d.date !== today) { d = { date: today, count: 0 }; }
+  return d;
+}
+function saveFreeApplyCount(d) {
+  localStorage.setItem(_freeApplyKey, JSON.stringify(d));
+}
+
 export const Auth = window.Auth = {
   getToken()   { return localStorage.getItem(TOKEN_KEY) || ''; },
   getUser()    { return localStorage.getItem(USER_KEY) || ''; },
@@ -58,4 +70,33 @@ export const Auth = window.Auth = {
   logout()     { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(ACCT_KEY); localStorage.removeItem(USER_KEY); location.reload(); },
   async login(a, p)          { const r = await adapter.login(a, p);          save(r.token, r.account, r.displayName); return r; },
   async register(a, dn, p)   { const r = await adapter.register(a, dn, p);  save(r.token, r.account, r.displayName); return r; },
+
+  /** 未登录用户免费试用投递入口（每天3次），用完弹登录 */
+  tryFreeApply(url) {
+    var d = getFreeApplyCount();
+    if (d.count >= 3) {
+      var m = document.getElementById('auth-modal');
+      if (m) { m.style.display = 'flex'; }
+      var err = document.getElementById('auth-error');
+      if (err) err.textContent = '今日免费次数已用完，登录后无限使用';
+      return false;
+    }
+    d.count++;
+    saveFreeApplyCount(d);
+    var left = 3 - d.count;
+    var toast = document.getElementById('toast');
+    if (toast) {
+      toast.textContent = '已使用 ' + d.count + '/3 次免费查看' + (left > 0 ? '（还剩 ' + left + ' 次）' : '');
+      toast.className = 'toast show';
+      setTimeout(function() { toast.className = 'toast'; }, 2500);
+    }
+    if (url) window.open(url, '_blank', 'noopener');
+    return true;
+  },
+
+  /** 剩余免费次数（用于提示文案） */
+  freeApplyLeft() {
+    var d = getFreeApplyCount();
+    return Math.max(0, 3 - d.count);
+  }
 };
