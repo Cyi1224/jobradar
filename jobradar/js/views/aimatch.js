@@ -4,6 +4,7 @@
  */
 import { JobStore } from '../data/catalog.js';
 import { ProfileStore } from '../data/profile.js';
+import { Auth } from '../core/auth.js';
 import { showToast } from '../core/toast.js';
 
 const MAX_RESULTS = 30;
@@ -171,7 +172,11 @@ export function initAimatch() {
                 ${target ? `<span class="match-meta-item"><i class="ti ti-users"></i>${target}</span>` : ''}
                 ${r.industry ? `<span class="match-meta-item"><i class="ti ti-building"></i>${r.industry.split('/')[0]}</span>` : ''}
                 ${dl.text ? `<span class="match-deadline-badge ${dl.cls}">${dl.text}</span>` : ''}
-                ${r.applyUrl ? `<a class="match-apply-link" href="${r.applyUrl}" target="_blank" rel="noopener"><i class="ti ti-send"></i>立即投递</a>` : ''}
+                ${r.applyUrl
+                  ? (Auth.isLoggedIn()
+                    ? `<a class="match-apply-link" href="${r.applyUrl}" target="_blank" rel="noopener"><i class="ti ti-send"></i>立即投递</a>`
+                    : `<button class="match-apply-link" onclick="document.getElementById('auth-modal').style.display='flex'" style="border:none;cursor:pointer;font-size:12px"><i class="ti ti-lock"></i>登录投递</button>`)
+                  : ''}
               </div>
             </div>
             <div class="match-right">

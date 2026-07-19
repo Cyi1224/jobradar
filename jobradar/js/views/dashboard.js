@@ -6,6 +6,7 @@
 import { Store } from '../data/store.js';
 import { JobStore } from '../data/catalog.js';
 import { ProfileStore } from '../data/profile.js';
+import { Auth } from '../core/auth.js';
 import { formatDeadline, isUrgent } from '../core/format.js';
 import { on, EVT } from '../core/bus.js';
 import { switchPage } from '../core/router.js';
@@ -273,7 +274,11 @@ async function renderRecommend() {
               ${dl}
             </div>
           </div>
-          ${j.applyUrl ? `<a class="dash-reco-apply" href="${j.applyUrl}" target="_blank" rel="noopener"><i class="ti ti-send"></i>投递</a>` : ''}
+          ${j.applyUrl
+            ? (Auth.isLoggedIn()
+              ? `<a class="dash-reco-apply" href="${j.applyUrl}" target="_blank" rel="noopener"><i class="ti ti-send"></i>投递</a>`
+              : `<button class="dash-reco-apply" onclick="document.getElementById('auth-modal').style.display='flex'" style="border:none;cursor:pointer;font-size:12px"><i class="ti ti-lock"></i>登录投递</button>`)
+            : ''}
         </div>`;
     }).join('');
   } catch (e) {
