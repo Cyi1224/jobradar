@@ -275,7 +275,7 @@ async function renderRecommend() {
             </div>
           </div>
           ${j.applyUrl
-            ? (Auth.isLoggedIn()
+            ? (window.Auth && window.Auth.isLoggedIn()
               ? `<a class="dash-reco-apply" href="${j.applyUrl}" target="_blank" rel="noopener"><i class="ti ti-send"></i>投递</a>`
               : `<button class="dash-reco-apply" onclick="document.getElementById('auth-modal').style.display='flex'" style="border:none;cursor:pointer;font-size:12px"><i class="ti ti-lock"></i>登录投递</button>`)
             : ''}

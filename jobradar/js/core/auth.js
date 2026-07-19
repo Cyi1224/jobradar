@@ -50,7 +50,7 @@ const authHttp = {
 
 const adapter = CONFIG.USE_MOCK ? authMock : authHttp;
 
-export const Auth = {
+export const Auth = window.Auth = {
   getToken()   { return localStorage.getItem(TOKEN_KEY) || ''; },
   getUser()    { return localStorage.getItem(USER_KEY) || ''; },
   getAccount() { return localStorage.getItem(ACCT_KEY) || ''; },
