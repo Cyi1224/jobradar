@@ -34,10 +34,10 @@ public class JobService {
 
     /** 分页 + 服务端筛选；按更新时间倒序（ISO 日期字符串字典序即时间序）。
      *  免费版仅放行前 FREE_MAX_PAGES 页；unlimited=true（会员）不限页。 */
-    public JobPageDTO search(String q, String recruitType, String industry, String city,
+    public JobPageDTO search(String q, String recruitType, String industry, String city,String target,
                              boolean apply, boolean urgent, boolean soe, boolean inst, boolean foreign,
                              String updatedAt, int page, int size, boolean unlimited) {
-        Specification<Job> spec = build(q, recruitType, industry, city, apply, urgent, soe, inst, foreign, updatedAt);
+        Specification<Job> spec = build(q, recruitType, industry, city, target, apply, urgent, soe, inst, foreign, updatedAt);
         Sort sort = Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.asc("id"));
         Page<Job> p = repo.findAll(spec, PageRequest.of(Math.max(0, page), clampSize(size), sort));
 
@@ -55,7 +55,7 @@ public class JobService {
         return Math.min(size, 100);
     }
 
-    private Specification<Job> build(String q, String recruitType, String industry, String city,
+    private Specification<Job> build(String q, String recruitType, String industry, String city,String target,
                                      boolean apply, boolean urgent, boolean soe, boolean inst, boolean foreign,
                                      String updatedAt) {
         return (root, query, cb) -> {
@@ -74,6 +74,7 @@ public class JobService {
                         }).toArray(Predicate[]::new);
                 if (kwPreds.length > 0) ps.add(cb.or(kwPreds));
             }
+            if (StringUtils.hasText(target) && !"不限".equals(target)) ps.add(cb.like(root.get("target"), "%" + target + "%"));
             if (StringUtils.hasText(recruitType)) ps.add(cb.equal(root.get("recruitType"), recruitType));
             if (StringUtils.hasText(industry))    ps.add(cb.equal(root.get("industry"), industry));
             if (StringUtils.hasText(city))        ps.add(cb.like(root.get("city"), "%" + city + "%"));

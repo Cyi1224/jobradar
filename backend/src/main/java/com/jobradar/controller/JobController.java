@@ -2,6 +2,7 @@ package com.jobradar.controller;
 
 import com.jobradar.dto.JobPageDTO;
 import com.jobradar.dto.JobSyncReq;
+import com.jobradar.security.UserContext;
 import com.jobradar.service.JobService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -42,9 +43,11 @@ public class JobController {
             @RequestParam(defaultValue = "false") boolean soe,
             @RequestParam(defaultValue = "false") boolean inst,
             @RequestParam(defaultValue = "false") boolean foreign,
+            @RequestParam(required = false) String target,
             @RequestParam(required = false) String updatedAt) {
-        // boolean unlimited = membership.isCurrentUserMember(); // 暂时全员免费，待支付接入后恢复
-        return service.search(q, recruitType, industry, city, apply, urgent, soe, inst, foreign, updatedAt, page, size, true);
+        // 登录用户无限浏览，未登录限前5页
+        boolean unlimited = (UserContext.get() != null);
+        return service.search(q, recruitType, industry, city, target, apply, urgent, soe, inst, foreign, updatedAt, page, size, unlimited);
     }
 
     @GetMapping("/stats")

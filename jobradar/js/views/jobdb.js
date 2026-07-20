@@ -11,7 +11,7 @@ const PAGE_SIZE = 50;
 const CITY_OPTS = ['北京', '上海', '深圳', '广州', '杭州', '成都', '南京', '武汉', '西安', '苏州', '天津', '重庆'];
 
 export function initJobdb() {
-  const filters = { q: '', recruitType: '', industry: '', city: '', apply: false, urgent: false, soe: false, inst: false, foreign: false, updatedAt: '' };
+  const filters = { q: '', recruitType: '', industry: '', city: '', target: '', apply: false, urgent: false, soe: false, inst: false, foreign: false, updatedAt: '' };
   let currentPage = 0, total = 0, totalPages = 0, capped = false;
   let items = [];
   let loading = false;
@@ -27,6 +27,7 @@ export function initJobdb() {
   const topPager = document.getElementById('jobdb-top-pager');
   const footer   = document.getElementById('jobdb-pagination');
   const search   = document.getElementById('jobdb-search');
+  const fTarget  = document.getElementById('jobdb-f-target');
   const fRecruit = document.getElementById('jobdb-f-recruit');
   const fIndustry= document.getElementById('jobdb-f-industry');
   const fCity    = document.getElementById('jobdb-f-city');
@@ -346,14 +347,15 @@ export function initJobdb() {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => { filters.q = search.value.trim(); applyFilters(); }, 250);
   });
+  fTarget?.addEventListener('change',   () => { filters.target = fTarget.value;       applyFilters(); });
   fRecruit?.addEventListener('change',  () => { filters.recruitType = fRecruit.value;  applyFilters(); });
   fIndustry?.addEventListener('change', () => { filters.industry    = fIndustry.value; applyFilters(); });
   fCity?.addEventListener('change',     () => { filters.city        = fCity.value;     applyFilters(); });
 
   resetBtn?.addEventListener('click', () => {
     if (search) search.value = '';
-    [fRecruit, fIndustry, fCity].forEach((s) => { if (s) s.value = ''; });
-    Object.assign(filters, { q: '', recruitType: '', industry: '', city: '', apply: false, urgent: false, soe: false, inst: false, foreign: false, updatedAt: '' });
+    [fTarget, fRecruit, fIndustry, fCity].forEach((s) => { if (s) s.value = ''; });
+    Object.assign(filters, { q: '', recruitType: '', industry: '', city: '', target: '', apply: false, urgent: false, soe: false, inst: false, foreign: false, updatedAt: '' });
     pageEl.querySelectorAll('.jdb-chip.active').forEach((c) => c.classList.remove('active'));
     setTodayFilter(false);
   });
