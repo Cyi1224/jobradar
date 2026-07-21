@@ -1463,15 +1463,15 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
 .re-header { margin-bottom: 18px; display: flex; align-items: flex-start; gap: 18px; }
 .re-head-main { flex: 1; min-width: 0; }
 .re-photo {
-  flex-shrink: 0; width: 92px; height: 120px; border-radius: 6px; overflow: hidden; position: relative;
+  flex-shrink: 0; width: 100px; height: 130px; border-radius: 8px; overflow: hidden; position: relative;
   border: 1.5px dashed #cbd5e1; background: #f8fafc; cursor: pointer; color: #94a3b8; font-size: 11.5px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
 }
-/* 头像尺寸变体 */
-.re-photo[data-photosize="sm"] { width: 70px; height: 90px; }
-.re-photo[data-photosize="md"] { width: 92px; height: 120px; }
-.re-photo[data-photosize="lg"] { width: 110px; height: 144px; }
-.re-photo[data-photosize="xl"] { width: 130px; height: 170px; }
+/* 头像尺寸变体（!important确保覆盖默认值） */
+.re-photo[data-photosize="sm"] { width: 80px !important; height: 104px !important; }
+.re-photo[data-photosize="md"] { width: 100px !important; height: 130px !important; }
+.re-photo[data-photosize="lg"] { width: 120px !important; height: 156px !important; }
+.re-photo[data-photosize="xl"] { width: 140px !important; height: 182px !important; }
 .re-photo:hover { border-color: var(--re-accent); color: var(--re-accent); }
 .re-photo.has { border-style: solid; border-color: #e5e7eb; }
 .re-photo > i { font-size: 22px; }
