@@ -23,9 +23,9 @@ function defaultDoc() {
   return {
     template: 'latex',
     theme: { accent: '#1A56DB', font: 'sans', fontSize: 'md', nameSize: 'md', secStyle: 'normal', divider: 'thin', spacing: 'normal', margin: 'normal' },
-    basics: { name: '张三', title: '后端开发工程师 · 2027届', phone: '138-0000-0000',
-              email: 'zhangsan@example.com', location: '上海', link: 'github.com/zhangsan',
-              photo: '', showPhoto: true },
+    basics: { name: '张三', title: '后端开发工程师 · 2027届',
+              contacts: '138-0000-0000 | zhangsan@example.com | 上海 | github.com/zhangsan',
+              photo: '', showPhoto: true, photoSize: 'md' },
     sections: [
       { id: sid(), type: 'summary', title: '个人简介',
         text: '计算机科学与技术专业 2027 届，熟悉 Java / Spring Boot 后端开发与分布式系统，有扎实的算法基础与实习经历，求职后端开发方向。' },
@@ -196,10 +196,11 @@ export function initResumeEditor() {
     const b = doc.basics;
     const showPhoto = b.showPhoto !== false;
     const photo = b.photo || '';
+    const psz = b.photoSize || 'md';
     const photoBox = showPhoto ? `
-      <div class="re-photo ${photo ? 'has' : ''}" data-act="photo-pick" title="点击${photo ? '更换' : '上传'}照片">
+      <div class="re-photo ${photo ? 'has' : ''}" data-photosize="${psz}" data-act="photo-pick" title="点击${photo ? '更换' : '上传'}照片">
         ${photo
-          ? `<img src="${photo}" alt="照片"><button class="re-photo-del" data-act="photo-remove" title="移除照片">×</button>`
+          ? `<img src="${photo}" alt="照片" style="width:100%;height:100%;object-fit:cover"><button class="re-photo-del" data-act="photo-remove" title="移除照片">×</button>`
           : `<i class="ti ti-camera-plus"></i><span>上传照片</span>`}
       </div>` : '';
     canvas.innerHTML = `
@@ -208,10 +209,7 @@ export function initResumeEditor() {
           ${field('basics.name', b.name, 're-name', '姓名')}
           ${field('basics.title', b.title, 're-title', '求职意向 / 头衔')}
           <div class="re-contacts">
-            ${field('basics.phone', b.phone, 're-c', '电话')}
-            ${field('basics.email', b.email, 're-c', '邮箱')}
-            ${field('basics.location', b.location, 're-c', '城市')}
-            ${field('basics.link', b.link, 're-c', '链接')}
+            ${field('basics.contacts', b.contacts || '', 're-contacts-line', '电话 | 邮箱 | 地址 | 链接 — 自由排版，用 | 分隔')}
           </div>
         </div>
         ${photoBox}
@@ -268,8 +266,10 @@ export function initResumeEditor() {
       g.addEventListener('dragstart', (e) => { const en = g.closest('.re-entry'); drag = { kind: 'item', sec: Number(en.dataset.sec), idx: Number(en.dataset.item) }; e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); });
     });
     canvas.querySelectorAll('.re-sec').forEach((s) => {
-      s.addEventListener('dragover', (e) => { if (drag?.kind === 'sec') e.preventDefault(); });
+      s.addEventListener('dragover', (e) => { if (drag?.kind === 'sec') { e.preventDefault(); s.classList.add('drag-over'); } });
+      s.addEventListener('dragleave', () => { s.classList.remove('drag-over'); });
       s.addEventListener('drop', (e) => {
+        s.classList.remove('drag-over');
         if (drag?.kind !== 'sec') return;
         e.preventDefault();
         const to = Number(s.dataset.idx);
@@ -300,7 +300,8 @@ export function initResumeEditor() {
     set('re-secstyle', doc.theme.secStyle  || 'normal');
     set('re-divider',  doc.theme.divider   || 'thin');
     set('re-spacing',  doc.theme.spacing);
-    set('re-margin',   doc.theme.margin);
+    set('re-margin',    doc.theme.margin);
+    set('re-photosize', doc.basics.photoSize || 'md');
     // 同步色板激活状态
     document.querySelectorAll('.re-swatch').forEach((s) => s.classList.toggle('active', s.dataset.color === doc.theme.accent));
     const cb = document.getElementById('re-showphoto'); if (cb) cb.checked = doc.basics.showPhoto !== false;
@@ -338,6 +339,12 @@ export function initResumeEditor() {
       scheduleHistory(); scheduleSave();
     }));
     document.getElementById('re-showphoto')?.addEventListener('change', (e) => structural(() => { doc.basics.showPhoto = e.target.checked; }));
+    document.getElementById('re-photosize')?.addEventListener('change', (e) => {
+      doc.basics.photoSize = e.target.value;
+      const box = canvas.querySelector('.re-photo');
+      if (box) box.dataset.photosize = e.target.value;
+      scheduleHistory(); scheduleSave();
+    });
     document.querySelectorAll('.re-addsec').forEach((b) => b.addEventListener('click', () => addSection(b.dataset.type)));
     document.getElementById('re-undo')?.addEventListener('click', undo);
     document.getElementById('re-undo-btn')?.addEventListener('click', undo);
