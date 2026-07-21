@@ -222,7 +222,11 @@ export function initResumeEditor() {
   function bindCanvas() {
     canvas.querySelectorAll('[data-path]').forEach((el) => {
       el.addEventListener('input', () => onTextInput(el));
-      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !el.classList.contains('re-bullet') && !el.classList.contains('re-summary')) e.preventDefault(); });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !el.classList.contains('re-bullet') && !el.classList.contains('re-summary') && !el.classList.contains('re-contacts-line')) {
+          e.preventDefault();
+        }
+      });
     });
     canvas.querySelectorAll('[data-act]').forEach((el) => el.addEventListener('click', (e) => doAct(el.dataset, e)));
     bindDnD();
