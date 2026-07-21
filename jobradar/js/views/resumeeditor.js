@@ -209,7 +209,8 @@ export function initResumeEditor() {
           ${field('basics.name', b.name, 're-name', '姓名')}
           ${field('basics.title', b.title, 're-title', '求职意向 / 头衔')}
           <div class="re-contacts">
-            ${field('basics.contacts', b.contacts || '', 're-contacts-line', '电话 | 邮箱 | 地址 | 链接 — 自由排版，用 | 分隔')}
+            ${field('basics.contacts', b.contacts || '', 're-contacts-line', '电话 | 邮箱 | 地址 | 链接 — 自由排版，按回车换行')}
+            <button class="re-del-contacts" data-act="clear-contacts" title="清空联系方式">×</button>
           </div>
         </div>
         ${photoBox}
@@ -236,6 +237,7 @@ export function initResumeEditor() {
   function doAct(d, e) {
     if (d.act === 'photo-pick')   { if (e) e.stopPropagation(); pickPhoto(); return; }
     if (d.act === 'photo-remove') { if (e) e.stopPropagation(); structural(() => { doc.basics.photo = ''; }); return; }
+    if (d.act === 'clear-contacts') { if (e) e.stopPropagation(); structural(() => { doc.basics.contacts = ''; }); return; }
     const i = Number(d.sec), j = Number(d.item), bi = Number(d.b), ti = Number(d.t), idx = Number(d.idx);
     structural(() => {
       switch (d.act) {
@@ -264,10 +266,12 @@ export function initResumeEditor() {
   let drag = null;
   function bindDnD() {
     canvas.querySelectorAll('.re-grip-sec').forEach((g) => {
-      g.addEventListener('dragstart', (e) => { drag = { kind: 'sec', idx: Number(g.closest('.re-sec').dataset.idx) }; e.dataTransfer.effectAllowed = 'move'; });
+      g.addEventListener('dragstart', (e) => { drag = { kind: 'sec', idx: Number(g.closest('.re-sec').dataset.idx) }; e.dataTransfer.setData('text/plain', ''); e.dataTransfer.effectAllowed = 'move'; });
+      g.addEventListener('dragend', () => { drag = null; });
     });
     canvas.querySelectorAll('.re-grip-item').forEach((g) => {
-      g.addEventListener('dragstart', (e) => { const en = g.closest('.re-entry'); drag = { kind: 'item', sec: Number(en.dataset.sec), idx: Number(en.dataset.item) }; e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); });
+      g.addEventListener('dragstart', (e) => { const en = g.closest('.re-entry'); drag = { kind: 'item', sec: Number(en.dataset.sec), idx: Number(en.dataset.item) }; e.dataTransfer.setData('text/plain', ''); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); });
+      g.addEventListener('dragend', () => { drag = null; });
     });
     canvas.querySelectorAll('.re-sec').forEach((s) => {
       s.addEventListener('dragover', (e) => { if (drag?.kind === 'sec') { e.preventDefault(); s.classList.add('drag-over'); } });
