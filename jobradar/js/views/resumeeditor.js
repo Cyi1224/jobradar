@@ -22,7 +22,7 @@ const TYPES = {
 function defaultDoc() {
   return {
     template: 'latex',
-    theme: { accent: '#1A56DB', font: 'sans', fontSize: 'md', nameSize: 'md', secStyle: 'normal', divider: 'thin', spacing: 'normal', margin: 'normal' },
+    theme: { accent: '#1A56DB', font: 'sans', fontSize: 'md', nameSize: 'md', secStyle: 'normal', divider: 'thin', spacing: 'normal', margin: 'normal', nameAlign: 'left', contactsAlign: 'left', secAlign: 'left' },
     basics: { name: '张三', title: '后端开发工程师 · 2027届',
               contacts: '138-0000-0000 | zhangsan@example.com | 上海 | github.com/zhangsan',
               photo: '', showPhoto: true, photoSize: 'md' },
@@ -192,6 +192,9 @@ export function initResumeEditor() {
     canvas.dataset.divider  = t.divider   || 'thin';
     canvas.dataset.spacing  = t.spacing;
     canvas.dataset.margin   = t.margin;
+    canvas.dataset.namealign = t.nameAlign || 'left';
+    canvas.dataset.contactsalign = t.contactsAlign || 'left';
+    canvas.dataset.secalign = t.secAlign || 'left';
     canvas.style.setProperty('--re-accent', t.accent);
     const b = doc.basics;
     const showPhoto = b.showPhoto !== false;
@@ -310,6 +313,9 @@ export function initResumeEditor() {
     set('re-spacing',  doc.theme.spacing);
     set('re-margin',    doc.theme.margin);
     set('re-photosize', doc.basics.photoSize || 'md');
+    set('re-namealign',    doc.theme.nameAlign   || 'left');
+    set('re-contactsalign',doc.theme.contactsAlign|| 'left');
+    set('re-secalign',     doc.theme.secAlign     || 'left');
     // 同步色板激活状态
     document.querySelectorAll('.re-swatch').forEach((s) => s.classList.toggle('active', s.dataset.color === doc.theme.accent));
     const cb = document.getElementById('re-showphoto'); if (cb) cb.checked = doc.basics.showPhoto !== false;
@@ -338,6 +344,16 @@ export function initResumeEditor() {
     themeBind('re-divider',  'divider');
     themeBind('re-spacing',  'spacing');
     themeBind('re-margin',   'margin');
+    // 对齐控件
+    const alignMap = { namealign: 'nameAlign', contactsalign: 'contactsAlign', secalign: 'secAlign' };
+    const alignBind = (id, attr) => document.getElementById(id)?.addEventListener('change', (e) => {
+      canvas.dataset[attr] = e.target.value;
+      doc.theme[alignMap[attr]] = e.target.value;
+      scheduleHistory(); scheduleSave();
+    });
+    alignBind('re-namealign', 'namealign');
+    alignBind('re-contactsalign', 'contactsalign');
+    alignBind('re-secalign', 'secalign');
     // 色板点击
     document.querySelectorAll('.re-swatch').forEach((s) => s.addEventListener('click', () => {
       doc.theme.accent = s.dataset.color;

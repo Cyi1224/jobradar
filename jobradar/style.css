@@ -1498,6 +1498,14 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
 .re-title { font-size: 14px; color: var(--re-accent); font-weight: 600; margin-top: 3px; }
 .re-contacts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: var(--re-fz); color: #6b7280; }
 
+/* 对齐控制 */
+.re-canvas[data-namealign="center"] .re-name, .re-canvas[data-namealign="center"] .re-title { text-align: center; }
+.re-canvas[data-namealign="right"]  .re-name, .re-canvas[data-namealign="right"]  .re-title { text-align: right; }
+.re-canvas[data-contactsalign="center"] .re-contacts { justify-content: center; }
+.re-canvas[data-contactsalign="right"]  .re-contacts { justify-content: flex-end; }
+.re-canvas[data-secalign="center"] .re-sec-title { text-align: center; }
+.re-canvas[data-secalign="right"]  .re-sec-title { text-align: right; }
+
 .re-sec { margin-bottom: var(--re-gap); position: relative; }
 .re-sec-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 .re-sec-title { font-size: calc(var(--re-fz) + 2px); font-weight: 700; color: #111827; flex: 1; }
