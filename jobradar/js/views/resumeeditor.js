@@ -242,6 +242,8 @@ export function initResumeEditor() {
       <button data-fb="ac" title="居中" style="width:30px;height:26px;border:none;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer;font-size:13px">≡◻≡</button>
       <button data-fb="ar" title="右对齐" style="width:30px;height:26px;border:none;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer;font-size:13px">◻≡</button>
       <span style="width:1px;height:20px;background:rgba(255,255,255,.2);margin:0 4px"></span>
+      <label title="字体颜色" style="width:28px;height:26px;border-radius:6px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1)"><span style="font-size:14px;pointer-events:none">🎨</span><input type="color" data-fb="color" style="position:absolute;opacity:0;width:28px;height:26px;cursor:pointer"></label>
+      <span style="width:1px;height:20px;background:rgba(255,255,255,.2);margin:0 4px"></span>
       <button data-fb="reset" title="重置样式" style="padding:3px 8px;border:none;background:rgba(255,255,255,.1);color:#f87171;border-radius:6px;cursor:pointer;font-size:11px">重置</button>`;
     document.body.appendChild(floatBar);
     floatBar.addEventListener('click', (e) => {
@@ -255,10 +257,11 @@ export function initResumeEditor() {
       else if (act === 'al') { activeField.style.textAlign = 'left'; }
       else if (act === 'ac') { activeField.style.textAlign = 'center'; }
       else if (act === 'ar') { activeField.style.textAlign = 'right'; }
-      else if (act === 'reset') { activeField.style.fontSize = ''; activeField.style.textAlign = ''; }
+      else if (act === 'color') { activeField.style.color = btn.value; }
+      else if (act === 'reset') { activeField.style.fontSize = ''; activeField.style.textAlign = ''; activeField.style.color = ''; }
       updateFloatBarState();
-      collectStyles();
-      scheduleHistory(); scheduleSave();
+      collectStyles(); scheduleHistory();
+      save();  // 立即持久化，切tab不丢失
     });
   }
   function showFloatBar(el) {
@@ -284,12 +287,16 @@ export function initResumeEditor() {
     if (al === 'left') floatBar.querySelector('[data-fb=al]').style.background = 'var(--brand)';
     else if (al === 'center') floatBar.querySelector('[data-fb=ac]').style.background = 'var(--brand)';
     else if (al === 'right') floatBar.querySelector('[data-fb=ar]').style.background = 'var(--brand)';
+    // 颜色选择器同步
+    const cl = activeField.style.color || '';
+    const colorInput = floatBar.querySelector('[data-fb=color]');
+    if (colorInput && cl) colorInput.value = cl;
   }
   function collectStyles() {
     canvas.querySelectorAll('[data-path]').forEach(el => {
       const path = el.dataset.path;
-      const fs = el.style.fontSize, ta = el.style.textAlign;
-      if (fs || ta) doc.styles[path] = { fontSize: fs || '', textAlign: ta || '' };
+      const fs = el.style.fontSize, ta = el.style.textAlign, cl = el.style.color;
+      if (fs || ta || cl) doc.styles[path] = { fontSize: fs || '', textAlign: ta || '', color: cl || '' };
       else delete doc.styles[path];
     });
   }
@@ -300,6 +307,7 @@ export function initResumeEditor() {
       if (s) {
         if (s.fontSize) el.style.fontSize = s.fontSize;
         if (s.textAlign) el.style.textAlign = s.textAlign;
+        if (s.color) el.style.color = s.color;
       }
     });
   }
@@ -457,6 +465,8 @@ export function initResumeEditor() {
   }
 
   wireControls();
+  // 页面切出时立即保存（防丢格式）
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { collectStyles(); save(); } });
   // 点击画布外隐藏悬浮工具栏
   document.addEventListener('click', (e) => { if (!canvas.contains(e.target) && !e.target.closest('#re-floatbar')) hideFloatBar(); });
   // 先渲染占位，再从存储加载覆盖（http 模式按用户从后端拉取，多设备同步）
