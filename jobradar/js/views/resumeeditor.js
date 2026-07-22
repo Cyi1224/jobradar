@@ -23,6 +23,7 @@ function defaultDoc() {
   return {
     template: 'latex',
     theme: { accent: '#1A56DB', font: 'sans', fontSize: 'md', nameSize: 'md', secStyle: 'normal', divider: 'thin', spacing: 'normal', margin: 'normal', nameAlign: 'left', contactsAlign: 'left', secAlign: 'left' },
+    styles: {},  // 每字段自定义样式: { 'basics.name': { fontSize: '28px', textAlign: 'center' }, ... }
     basics: { name: '张三', title: '后端开发工程师 · 2027届',
               contacts: '138-0000-0000 | zhangsan@example.com | 上海 | github.com/zhangsan',
               photo: '', showPhoto: true, photoSize: 'md' },
@@ -65,6 +66,7 @@ export function initResumeEditor() {
   /* ── 持久化（mock=localStorage / http=后端按用户存）── */
   function snapshot() { return JSON.stringify(doc); }
   async function save() {
+    collectStyles();
     try { await ResumeDocStore.save(doc); dirty = false; setStatus('已保存'); }
     catch { setStatus('未保存'); }
   }
@@ -220,11 +222,92 @@ export function initResumeEditor() {
       </header>
       <div class="re-sections">${doc.sections.map(sectionHtml).join('')}</div>`;
     bindCanvas();
+    applyStyles();
     updateUndoRedo();
+  }
+
+  /* ── 悬浮格式工具栏 ── */
+  let floatBar = null, activeField = null;
+  function ensureFloatBar() {
+    if (floatBar) return;
+    floatBar = document.createElement('div');
+    floatBar.id = 're-floatbar';
+    floatBar.style.cssText = 'position:fixed;display:none;z-index:999;background:#1e293b;color:#fff;border-radius:10px;padding:6px 10px;gap:8px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);font-size:13px;font-family:var(--font-body)';
+    floatBar.innerHTML = `
+      <button data-fb="sz-" title="缩小字号" style="width:26px;height:26px;border:none;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer;font-size:14px">A⁻</button>
+      <span id="fb-fontsize" style="min-width:32px;text-align:center;font-size:12px">默认</span>
+      <button data-fb="sz+" title="放大字号" style="width:26px;height:26px;border:none;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer;font-size:14px">A⁺</button>
+      <span style="width:1px;height:20px;background:rgba(255,255,255,.2);margin:0 4px"></span>
+      <button data-fb="al" title="左对齐" style="width:30px;height:26px;border:none;background:rgba(255,255,255,.15);color:#fff;border-radius:6px;cursor:pointer;font-size:13px">≡◻</button>
+      <button data-fb="ac" title="居中" style="width:30px;height:26px;border:none;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer;font-size:13px">≡◻≡</button>
+      <button data-fb="ar" title="右对齐" style="width:30px;height:26px;border:none;background:rgba(255,255,255,.1);color:#fff;border-radius:6px;cursor:pointer;font-size:13px">◻≡</button>
+      <span style="width:1px;height:20px;background:rgba(255,255,255,.2);margin:0 4px"></span>
+      <button data-fb="reset" title="重置样式" style="padding:3px 8px;border:none;background:rgba(255,255,255,.1);color:#f87171;border-radius:6px;cursor:pointer;font-size:11px">重置</button>`;
+    document.body.appendChild(floatBar);
+    floatBar.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-fb]');
+      if (!btn || !activeField) return;
+      const act = btn.dataset.fb;
+      const path = activeField.dataset.path;
+      const cur = parseFloat(activeField.style.fontSize) || parseFloat(getComputedStyle(activeField).fontSize) || 13;
+      if (act === 'sz+') { activeField.style.fontSize = Math.min(48, cur + 2) + 'px'; }
+      else if (act === 'sz-') { activeField.style.fontSize = Math.max(8, cur - 2) + 'px'; }
+      else if (act === 'al') { activeField.style.textAlign = 'left'; }
+      else if (act === 'ac') { activeField.style.textAlign = 'center'; }
+      else if (act === 'ar') { activeField.style.textAlign = 'right'; }
+      else if (act === 'reset') { activeField.style.fontSize = ''; activeField.style.textAlign = ''; }
+      updateFloatBarState();
+      collectStyles();
+      scheduleHistory(); scheduleSave();
+    });
+  }
+  function showFloatBar(el) {
+    ensureFloatBar();
+    activeField = el;
+    const r = el.getBoundingClientRect();
+    floatBar.style.display = 'flex';
+    floatBar.style.left = Math.max(10, Math.min(r.left + r.width/2 - floatBar.offsetWidth/2, window.innerWidth - floatBar.offsetWidth - 10)) + 'px';
+    floatBar.style.top = (r.top - 46) + 'px';
+    if (r.top < 56) floatBar.style.top = (r.bottom + 6) + 'px';
+    updateFloatBarState();
+  }
+  function hideFloatBar() {
+    if (floatBar) floatBar.style.display = 'none';
+    activeField = null;
+  }
+  function updateFloatBarState() {
+    if (!activeField || !floatBar) return;
+    const cur = parseFloat(activeField.style.fontSize) || parseFloat(getComputedStyle(activeField).fontSize) || 13;
+    document.getElementById('fb-fontsize').textContent = Math.round(cur) + 'px';
+    const al = activeField.style.textAlign || '';
+    floatBar.querySelectorAll('[data-fb^=a]').forEach(b => b.style.background = 'rgba(255,255,255,.1)');
+    if (al === 'left') floatBar.querySelector('[data-fb=al]').style.background = 'var(--brand)';
+    else if (al === 'center') floatBar.querySelector('[data-fb=ac]').style.background = 'var(--brand)';
+    else if (al === 'right') floatBar.querySelector('[data-fb=ar]').style.background = 'var(--brand)';
+  }
+  function collectStyles() {
+    canvas.querySelectorAll('[data-path]').forEach(el => {
+      const path = el.dataset.path;
+      const fs = el.style.fontSize, ta = el.style.textAlign;
+      if (fs || ta) doc.styles[path] = { fontSize: fs || '', textAlign: ta || '' };
+      else delete doc.styles[path];
+    });
+  }
+  function applyStyles() {
+    if (!doc.styles) return;
+    canvas.querySelectorAll('[data-path]').forEach(el => {
+      const s = doc.styles[el.dataset.path];
+      if (s) {
+        if (s.fontSize) el.style.fontSize = s.fontSize;
+        if (s.textAlign) el.style.textAlign = s.textAlign;
+      }
+    });
   }
 
   function bindCanvas() {
     canvas.querySelectorAll('[data-path]').forEach((el) => {
+      el.addEventListener('focus', () => showFloatBar(el));
+      el.addEventListener('blur', () => setTimeout(() => { if (activeField === el) hideFloatBar(); }, 200));
       el.addEventListener('input', () => onTextInput(el));
       el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !el.classList.contains('re-bullet') && !el.classList.contains('re-summary') && !el.classList.contains('re-contacts-line')) {
@@ -388,6 +471,8 @@ export function initResumeEditor() {
   }
 
   wireControls();
+  // 点击画布外隐藏悬浮工具栏
+  document.addEventListener('click', (e) => { if (!canvas.contains(e.target) && !e.target.closest('#re-floatbar')) hideFloatBar(); });
   // 先渲染占位，再从存储加载覆盖（http 模式按用户从后端拉取，多设备同步）
   syncControls();
   render();

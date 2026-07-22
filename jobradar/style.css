@@ -1492,6 +1492,9 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
 }
 .re-contacts:hover .re-del-contacts { opacity: 1; }
 .re-del-contacts:hover { color: #ef4444; }
+/* 悬浮格式工具栏 */
+#re-floatbar button:hover { background: rgba(255,255,255,.25) !important; }
+#re-floatbar button:active { transform: scale(.9); }
 .re-check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--c-text-2); cursor: pointer; }
 .re-check input { width: 15px; height: 15px; cursor: pointer; accent-color: var(--brand); }
 .re-name { font-size: 26px; font-weight: 700; color: #111827; letter-spacing: -.01em; }
