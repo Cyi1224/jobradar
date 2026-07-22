@@ -315,6 +315,7 @@ export function initResumeEditor() {
   function bindCanvas() {
     canvas.querySelectorAll('[data-path]').forEach((el) => {
       el.addEventListener('click', (e) => { e.stopPropagation(); showFloatBar(el); });
+      el.addEventListener('paste', (e) => { e.preventDefault(); const text = (e.clipboardData || window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, text); });
       el.addEventListener('input', () => onTextInput(el));
       el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !el.classList.contains('re-bullet') && !el.classList.contains('re-summary') && !el.classList.contains('re-contacts-line')) {
