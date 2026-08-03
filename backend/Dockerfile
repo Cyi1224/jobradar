@@ -11,4 +11,5 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# JVM 堆内存: 512M max, 128M initial (服务器共 961MB RAM, MySQL~80MB+Nginx~3MB)
+ENTRYPOINT ["java", "-Xmx512m", "-Xms128m", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
