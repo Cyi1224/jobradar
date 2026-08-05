@@ -39,4 +39,12 @@ public interface JobRepository extends JpaRepository<Job, Long>, JpaSpecificatio
 
     @Query("select distinct j.industry from Job j where j.industry is not null and j.industry <> '' order by j.industry")
     List<String> distinctIndustries();
+
+    /** 按行业统计岗位数（SQL 端聚合） */
+    @Query("SELECT j.industry, COUNT(j) FROM Job j WHERE j.industry IS NOT NULL AND j.industry <> '' GROUP BY j.industry ORDER BY COUNT(j) DESC")
+    List<Object[]> countByIndustry();
+
+    /** 按招聘类型统计岗位数（SQL 端聚合） */
+    @Query("SELECT j.recruitType, COUNT(j) FROM Job j WHERE j.recruitType IS NOT NULL AND j.recruitType <> '' GROUP BY j.recruitType ORDER BY COUNT(j) DESC")
+    List<Object[]> countByRecruitType();
 }

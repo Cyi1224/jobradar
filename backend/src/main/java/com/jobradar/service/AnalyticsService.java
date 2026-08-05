@@ -1,21 +1,24 @@
 package com.jobradar.service;
 
-import com.jobradar.entity.Job;
 import com.jobradar.entity.SyncLog;
 import com.jobradar.entity.VisitLog;
 import com.jobradar.repository.JobRepository;
 import com.jobradar.repository.SyncLogRepository;
 import com.jobradar.repository.UserRepository;
 import com.jobradar.repository.VisitLogRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 分析服务 — v2: 所有聚合在 SQL 端完成，不把全表加载到 JVM 内存。
+ */
 @Service
 public class AnalyticsService {
 
@@ -32,31 +35,29 @@ public class AnalyticsService {
         this.syncLogRepo = syncLogRepo;
     }
 
-    /** 汇总卡片数据 */
+    // ═══════════════════════ 汇总 ═══════════════════════
+
+    /** 汇总卡片数据 — 纯 COUNT 查询，无实体加载 */
     @Transactional(readOnly = true)
     public Map<String, Object> summary() {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         LocalDateTime now = LocalDateTime.now();
 
-        long totalVisits = visitLogRepo.count();
-        long todayVisits = visitLogRepo.countByCreatedAtBetween(todayStart, now);
-        long uniqueIps = visitLogRepo.countDistinctIpByCreatedAtBetween(LocalDate.now().minusDays(30).atStartOfDay(), now);
-        long totalUsers = userRepo.count();
-        long newUsersToday = userRepo.countByCreatedAtBetween(todayStart, now);
-        long activeUsers7d = visitLogRepo.countDistinctUserIdByCreatedAtBetween(
-                LocalDate.now().minusDays(7).atStartOfDay(), now);
-
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("totalVisits", totalVisits);
-        result.put("todayVisits", todayVisits);
-        result.put("uniqueIps", uniqueIps);
-        result.put("totalUsers", totalUsers);
-        result.put("newUsersToday", newUsersToday);
-        result.put("activeUsers7d", activeUsers7d);
+        result.put("totalVisits", visitLogRepo.count());
+        result.put("todayVisits", visitLogRepo.countByCreatedAtBetween(todayStart, now));
+        result.put("uniqueIps", visitLogRepo.countDistinctIpByCreatedAtBetween(
+                LocalDate.now().minusDays(30).atStartOfDay(), now));
+        result.put("totalUsers", userRepo.count());
+        result.put("newUsersToday", userRepo.countByCreatedAtBetween(todayStart, now));
+        result.put("activeUsers7d", visitLogRepo.countDistinctUserIdByCreatedAtBetween(
+                LocalDate.now().minusDays(7).atStartOfDay(), now));
         return result;
     }
 
-    /** 每日访问量 + 每日注册量 */
+    // ═══════════════════════ 每日访问 + 注册 ═══════════════════════
+
+    /** 每日统计 — SQL GROUP BY DATE，不加载实体 */
     @Transactional(readOnly = true)
     public Map<String, Object> dailyStats(int days) {
         LocalDate endDate = LocalDate.now();
@@ -64,27 +65,30 @@ public class AnalyticsService {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay();
 
-        // 按天聚合访问量
-        List<VisitLog> visits = visitLogRepo.findByCreatedAtBetween(start, end);
-        Map<LocalDate, Long> visitByDay = visits.stream()
-                .collect(Collectors.groupingBy(v -> v.getCreatedAt().toLocalDate(), Collectors.counting()));
+        // SQL: SELECT DATE(created_at), COUNT(*) ... GROUP BY DATE(created_at)
+        List<Object[]> visitRows = visitLogRepo.countByDayBetween(start, end);
+        Map<String, Long> visitByDay = new LinkedHashMap<>();
+        for (Object[] row : visitRows) {
+            visitByDay.put(String.valueOf(row[0]), ((Number) row[1]).longValue());
+        }
 
-        // 按天聚合注册量（查询用户表）
-        Map<LocalDate, Long> regByDay = userRepo.findByCreatedAtBetween(start, end).stream()
-                .collect(Collectors.groupingBy(u -> u.getCreatedAt().toLocalDate(), Collectors.counting()));
+        // 注册量保持原逻辑（用户量不大，findByCreatedAtBetween 可接受）
+        Map<String, Long> regByDay = userRepo.findByCreatedAtBetween(start, end).stream()
+                .collect(Collectors.groupingBy(u -> u.getCreatedAt().toLocalDate().toString(),
+                        Collectors.counting()));
 
-        // 补齐空缺日期
         List<Map<String, Object>> visitDays = new ArrayList<>();
         List<Map<String, Object>> regDays = new ArrayList<>();
         for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+            String key = d.toString();
             Map<String, Object> vd = new LinkedHashMap<>();
-            vd.put("date", d.toString());
-            vd.put("count", visitByDay.getOrDefault(d, 0L));
+            vd.put("date", key);
+            vd.put("count", visitByDay.getOrDefault(key, 0L));
             visitDays.add(vd);
 
             Map<String, Object> rd = new LinkedHashMap<>();
-            rd.put("date", d.toString());
-            rd.put("count", regByDay.getOrDefault(d, 0L));
+            rd.put("date", key);
+            rd.put("count", regByDay.getOrDefault(key, 0L));
             regDays.add(rd);
         }
 
@@ -95,36 +99,33 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 页面热度排行 */
+    // ═══════════════════════ 页面热度 ═══════════════════════
+
+    /** 页面热度排行 — SQL GROUP BY pageName */
     @Transactional(readOnly = true)
     public Map<String, Object> pageStats(int days) {
         LocalDateTime start = LocalDate.now().minusDays(days).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
 
-        List<VisitLog> pageVisits = visitLogRepo.findByVisitTypeAndCreatedAtBetween("page", start, end);
+        List<Object[]> rows = visitLogRepo.countByPageBetween(start, end);
 
-        // 按 pageName 分组统计；无 pageName 的按 path 首段
-        Map<String, Long> counts = pageVisits.stream()
-                .collect(Collectors.groupingBy(v -> {
-                    String pn = v.getPageName();
-                    if (pn != null && !pn.isBlank()) return pn;
-                    // 回退：从 path 提取页面名
-                    String path = v.getPath();
-                    if (path != null && path.startsWith("/page-")) {
-                        return path.substring(6);
-                    }
-                    return "其他";
-                }, Collectors.counting()));
+        List<Map<String, Object>> pages = rows.stream()
+                .map(row -> {
+                    String pageName = row[0] != null ? String.valueOf(row[0]) : null;
+                    String path = row[1] != null ? String.valueOf(row[1]) : null;
+                    long count = ((Number) row[2]).longValue();
 
-        List<Map<String, Object>> pages = counts.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(10)
-                .map(e -> {
+                    // 回退：无 pageName 时从 path 提取
+                    String label = (pageName != null && !pageName.isBlank()) ? pageName
+                            : (path != null && path.startsWith("/page-")) ? path.substring(6) : "其他";
+
                     Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("page", e.getKey());
-                    m.put("count", e.getValue());
+                    m.put("page", label);
+                    m.put("count", count);
                     return m;
                 })
+                .sorted((a, b) -> Long.compare((Long) b.get("count"), (Long) a.get("count")))
+                .limit(10)
                 .collect(Collectors.toList());
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -133,15 +134,18 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 最近访问记录 */
+    // ═══════════════════════ 最近访问 ═══════════════════════
+
+    /** 最近访问 — 分页查询，只取 limit 条 */
     @Transactional(readOnly = true)
     public Map<String, Object> recentVisits(int limit) {
         LocalDateTime start = LocalDate.now().minusDays(7).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
 
-        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetweenOrderByCreatedAtDesc(start, end);
+        List<VisitLog> logs = visitLogRepo.findRecentByCreatedAtBetween(start, end,
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt")));
+
         List<Map<String, Object>> visits = logs.stream()
-                .limit(limit)
                 .map(v -> {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("time", v.getCreatedAt() != null ? v.getCreatedAt().toString() : null);
@@ -163,25 +167,25 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 时段流量分布（24小时） */
+    // ═══════════════════════ 时段分布 ═══════════════════════
+
+    /** 24 小时分布 — SQL GROUP BY HOUR */
     @Transactional(readOnly = true)
     public Map<String, Object> hourlyStats(int days) {
         LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
 
-        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetween(start, end);
-        Map<Integer, Long> hourCounts = logs.stream()
-                .collect(Collectors.groupingBy(
-                        v -> v.getCreatedAt().getHour(),
-                        Collectors.counting()
-                ));
+        List<Object[]> rows = visitLogRepo.countByHourBetween(start, end);
+        Map<Integer, Long> hourMap = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            hourMap.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());
+        }
 
-        // 补齐 24 小时
         List<Map<String, Object>> hours = new ArrayList<>();
         for (int h = 0; h < 24; h++) {
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("hour", String.format("%02d:00", h));
-            entry.put("count", hourCounts.getOrDefault(h, 0L));
+            entry.put("count", hourMap.getOrDefault(h, 0L));
             hours.add(entry);
         }
 
@@ -191,18 +195,20 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 流量来源分布 */
+    // ═══════════════════════ 来源分布 ═══════════════════════
+
+    /** 流量来源 — SQL GROUP BY source */
     @Transactional(readOnly = true)
     public Map<String, Object> sourceStats(int days) {
         LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
 
-        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetween(start, end);
-        Map<String, Long> sourceCounts = logs.stream()
-                .filter(v -> v.getSource() != null && !v.getSource().isBlank())
-                .collect(Collectors.groupingBy(VisitLog::getSource, Collectors.counting()));
-
-        // 确保三类来源都存在
+        List<Object[]> rows = visitLogRepo.countBySourceBetween(start, end);
+        Map<String, Long> sourceCounts = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            String key = row[0] != null ? String.valueOf(row[0]) : "直接访问";
+            sourceCounts.put(key, ((Number) row[1]).longValue());
+        }
         for (String key : List.of("搜索引擎", "外部链接", "直接访问")) {
             sourceCounts.putIfAbsent(key, 0L);
         }
@@ -223,21 +229,25 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 访问地区分布 Top10 */
+    // ═══════════════════════ 地区分布 ═══════════════════════
+
+    /** 地区 Top10 — SQL GROUP BY region */
     @Transactional(readOnly = true)
     public Map<String, Object> regionStats(int days) {
         LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
 
-        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetween(start, end);
-        Map<String, Long> regionCounts = logs.stream()
-                .filter(v -> v.getRegion() != null && !v.getRegion().isBlank())
-                .map(v -> {
-                    // "中国-广东-深圳" → "广东"
-                    String[] parts = v.getRegion().split("-");
-                    return parts.length >= 2 ? parts[1] : parts[0];
-                })
-                .collect(Collectors.groupingBy(r -> r, Collectors.counting()));
+        List<Object[]> rows = visitLogRepo.countByRegionBetween(start, end);
+
+        // group parsed province
+        Map<String, Long> regionCounts = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            String region = row[0] != null ? String.valueOf(row[0]) : null;
+            if (region == null || region.isBlank()) continue;
+            String[] parts = region.split("-");
+            String province = parts.length >= 2 ? parts[1] : parts[0];
+            regionCounts.merge(province, ((Number) row[1]).longValue(), Long::sum);
+        }
 
         List<Map<String, Object>> regions = regionCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
@@ -256,70 +266,54 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 岗位数据库概览 */
+    // ═══════════════════════ 岗位统计 ═══════════════════════
+
+    /** 岗位概览 — SQL 聚合，不再 jobRepo.findAll() */
     @Transactional(readOnly = true)
     public Map<String, Object> jobsStats() {
         String today = LocalDate.now().toString();
-        long totalJobs = jobRepo.count();
-        long openJobs = jobRepo.countOpen(today);
-        long expiredJobs = jobRepo.countExpired(today);
-        long distinctCompanies = jobRepo.countDistinctCo();
-        long todayNew = jobRepo.countByUpdatedAt(today);
-        String lastSync = jobRepo.maxUpdatedAt();
 
-        List<Job> allJobs = jobRepo.findAll();
-
-        // 按行业分组 Top10
-        List<Map<String, Object>> byIndustry = allJobs.stream()
-                .filter(j -> j.getIndustry() != null && !j.getIndustry().isBlank())
-                .collect(Collectors.groupingBy(Job::getIndustry, Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+        // 行业 Top10: SQL GROUP BY
+        List<Map<String, Object>> byIndustry = jobRepo.countByIndustry().stream()
                 .limit(10)
-                .map(e -> {
+                .map(row -> {
                     Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("name", e.getKey());
-                    m.put("count", e.getValue());
+                    m.put("name", String.valueOf(row[0]));
+                    m.put("count", ((Number) row[1]).longValue());
                     return m;
                 })
                 .collect(Collectors.toList());
 
-        // 按招聘类型分组
-        List<Map<String, Object>> byRecruitType = allJobs.stream()
-                .filter(j -> j.getRecruitType() != null && !j.getRecruitType().isBlank())
-                .collect(Collectors.groupingBy(Job::getRecruitType, Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .map(e -> {
+        // 招聘类型分布: SQL GROUP BY
+        List<Map<String, Object>> byRecruitType = jobRepo.countByRecruitType().stream()
+                .map(row -> {
                     Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("name", e.getKey());
-                    m.put("count", e.getValue());
+                    m.put("name", String.valueOf(row[0]));
+                    m.put("count", ((Number) row[1]).longValue());
                     return m;
                 })
                 .collect(Collectors.toList());
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("totalJobs", totalJobs);
-        result.put("openJobs", openJobs);
-        result.put("expiredJobs", expiredJobs);
-        result.put("distinctCompanies", distinctCompanies);
-        result.put("todayNew", todayNew);
+        result.put("totalJobs", jobRepo.count());
+        result.put("openJobs", jobRepo.countOpen(today));
+        result.put("expiredJobs", jobRepo.countExpired(today));
+        result.put("distinctCompanies", jobRepo.countDistinctCo());
+        result.put("todayNew", jobRepo.countByUpdatedAt(today));
+        String lastSync = jobRepo.maxUpdatedAt();
         result.put("lastSync", lastSync != null ? lastSync : "");
         result.put("byIndustry", byIndustry);
         result.put("byRecruitType", byRecruitType);
         return result;
     }
 
-    /** 会员统计 */
+    // ═══════════════════════ 会员统计 ═══════════════════════
+
+    /** 会员统计 — SQL COUNT，不再 userRepo.findAll() */
     @Transactional(readOnly = true)
     public Map<String, Object> memberStats() {
-        LocalDateTime now = LocalDateTime.now();
         long totalUsers = userRepo.count();
-
-        long activeMembers = userRepo.findAll().stream()
-                .filter(u -> u.getMemberUntil() != null && u.getMemberUntil().isAfter(now))
-                .count();
-
+        long activeMembers = userRepo.countActiveMembers(LocalDateTime.now());
         long freeUsers = totalUsers - activeMembers;
         double conversionRate = totalUsers > 0
                 ? Math.round(activeMembers * 10000.0 / totalUsers) / 100.0
@@ -333,15 +327,15 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 同步历史记录 */
+    // ═══════════════════════ 同步历史 ═══════════════════════
+
     @Transactional(readOnly = true)
     public Map<String, Object> syncHistory(int days) {
         LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
 
-        List<SyncLog> logs = syncLogRepo.findBySyncTimeBetweenOrderBySyncTimeDesc(start, end);
+        var logs = syncLogRepo.findBySyncTimeBetweenOrderBySyncTimeDesc(start, end);
 
-        // 按天聚合
         Map<LocalDate, List<SyncLog>> byDay = logs.stream()
                 .collect(Collectors.groupingBy(l -> l.getSyncTime().toLocalDate()));
 
@@ -373,7 +367,9 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 每日活跃用户（DAU）—— 登录用户访问数 */
+    // ═══════════════════════ DAU ═══════════════════════
+
+    /** 每日活跃用户 — SQL COUNT(DISTINCT userId) GROUP BY DATE */
     @Transactional(readOnly = true)
     public Map<String, Object> dailyActiveUsers(int days) {
         LocalDate endDate = LocalDate.now();
@@ -381,23 +377,17 @@ public class AnalyticsService {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay();
 
-        // 从 visit_log 按天聚合去重 user_id
-        List<VisitLog> logs = visitLogRepo.findByCreatedAtBetween(start, end);
-        Map<LocalDate, Long> dauByDay = logs.stream()
-                .filter(v -> v.getUserId() != null)
-                .collect(Collectors.groupingBy(
-                        v -> v.getCreatedAt().toLocalDate(),
-                        Collectors.mapping(VisitLog::getUserId, Collectors.toSet())
-                ))
-                .entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> (long) e.getValue().size()));
+        List<Object[]> rows = visitLogRepo.countDauByDayBetween(start, end);
+        Map<String, Long> dauMap = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            dauMap.put(String.valueOf(row[0]), ((Number) row[1]).longValue());
+        }
 
-        // 补齐空缺日期
         List<Map<String, Object>> dauList = new ArrayList<>();
         for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("date", d.toString());
-            entry.put("count", dauByDay.getOrDefault(d, 0L));
+            entry.put("count", dauMap.getOrDefault(d.toString(), 0L));
             dauList.add(entry);
         }
 
@@ -407,7 +397,8 @@ public class AnalyticsService {
         return result;
     }
 
-    /** 记录前端页面浏览 ping */
+    // ═══════════════════════ 页面浏览上报 ═══════════════════════
+
     @Transactional
     public void logPageView(String pageName, String path, String ip, String userAgent) {
         VisitLog log = new VisitLog();
@@ -421,12 +412,12 @@ public class AnalyticsService {
         visitLogRepo.save(log);
     }
 
-    /** 注册用户列表（分页） */
+    // ═══════════════════════ 用户列表 ═══════════════════════
+
     @Transactional(readOnly = true)
     public Map<String, Object> users(int page, int size) {
         var pageResult = userRepo.findAll(
-                org.springframework.data.domain.PageRequest.of(page, size,
-                        org.springframework.data.domain.Sort.by("createdAt").descending()));
+                PageRequest.of(page, size, Sort.by("createdAt").descending()));
 
         List<Map<String, Object>> list = pageResult.getContent().stream()
                 .map(u -> {
@@ -435,7 +426,6 @@ public class AnalyticsService {
                     m.put("account", u.getAccount());
                     m.put("displayName", u.getDisplayName());
                     m.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : null);
-                    // 会员状态：memberUntil 不为空且未过期 = 会员
                     boolean isMember = u.getMemberUntil() != null &&
                             u.getMemberUntil().isAfter(LocalDateTime.now());
                     m.put("memberStatus", isMember ? "会员" : "免费版");
@@ -452,6 +442,8 @@ public class AnalyticsService {
         result.put("totalPages", pageResult.getTotalPages());
         return result;
     }
+
+    // ═══════════════════════ Util ═══════════════════════
 
     private String maskIp(String ip) {
         if (ip == null) return null;

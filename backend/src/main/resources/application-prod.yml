@@ -10,15 +10,17 @@ spring:
     username: ${DB_USER:root}
     password: ${DB_PASSWORD:}
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: 5            # 服务器内存仅 961MB，减半连接池
+      minimum-idle: 2
   jpa:
     hibernate:
-      ddl-auto: update           # 生产：按实体建/补表，不删数据（首次自动建表）
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate.dialect: org.hibernate.dialect.MySQLDialect
       hibernate.jdbc.batch_size: 200
       hibernate.order_inserts: true
+      hibernate.jdbc.fetch_size: 50   # 流式读取，每次只取 50 行到内存
   h2:
     console:
       enabled: false             # 生产关闭 H2 控制台

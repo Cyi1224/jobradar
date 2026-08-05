@@ -37,8 +37,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8123}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-change-me-to-a-strong-admin-key}
       OFFERBIU_SYNC_MAXPAGES: 10
-      # JVM heap: 512MB on a 961MB-RAM server (MySQL ~80MB + Nginx ~3MB + OS overhead)
-      JAVA_TOOL_OPTIONS: "-Xmx512m -Xms128m"
+      # JVM heap: 384MB — SQL 聚合后不再需要大堆，留内存给 OS/MySQL
+      JAVA_TOOL_OPTIONS: "-Xmx384m -Xms128m"
     depends_on:
       mysql:
         condition: service_healthy
