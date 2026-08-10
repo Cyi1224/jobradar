@@ -76,6 +76,12 @@ public class BotFilter extends OncePerRequestFilter {
             return;
         }
 
+        // 注册/登录接口放行（已有 RateLimitFilter 限流保护）
+        if (path.startsWith("/api/auth/")) {
+            chain.doFilter(req, res);
+            return;
+        }
+
         // 1. 检查是否在黑名单中
         Long unblockAt = ipBlockUntil.get(ip);
         if (unblockAt != null) {
