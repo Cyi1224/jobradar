@@ -45,6 +45,12 @@ export function initProfile() {
         untilEl.textContent = '';
       }
     }
+    // 开通/续费按钮文案：会员→续费会员，免费→开通会员（均跳转会员页面）
+    const upgradeBtn = document.getElementById('profile-upgrade-btn');
+    if (upgradeBtn) {
+      upgradeBtn.textContent = st.member ? '续费会员' : '开通会员';
+      upgradeBtn.setAttribute('data-goto', 'pricing');
+    }
   }).catch(() => {});
 
   const saveBtn = document.getElementById('profile-save-btn');
