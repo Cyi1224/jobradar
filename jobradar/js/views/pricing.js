@@ -28,13 +28,13 @@ export function initPricing() {
             ${p.best ? '<div class="pricing-badge">最划算</div>' : ''}
             <div class="pricing-name">${p.name}</div>
             <div class="pricing-price"><span class="pricing-cur">¥</span>${p.price}</div>
-            <div class="pricing-per">约 ¥${p.perMonth} / 月</div>
+            <div class="pricing-per">${p.buyout ? '一次买断 · 长期使用' : '约 ¥' + p.perMonth + ' / 月'}</div>
             <ul class="pricing-feats">
               <li><i class="ti ti-check"></i>解锁校招信息库全部岗位</li>
               <li><i class="ti ti-check"></i>无限翻页，不限前 5 页</li>
-              <li><i class="ti ti-check"></i>有效期 ${p.days} 天（可叠加续费）</li>
+              <li><i class="ti ti-check"></i>${p.buyout ? '一次付费 · 终身有效' : '有效期 ' + p.days + ' 天（可叠加续费）'}</li>
             </ul>
-            <button class="btn primary pricing-buy" data-plan="${p.key}">立即开通</button>
+            <button class="btn primary pricing-buy" data-plan="${p.key}">${p.buyout ? '立即买断' : '立即开通'}</button>
           </div>`).join('')}
       </div>
       <div class="pricing-note"><i class="ti ti-info-circle"></i> 支付由 Zpay 安全担保，支持微信 / 支付宝。支付成功后自动开通会员。</div>

@@ -1,7 +1,7 @@
 /**
  * core/membership.js — 付费会员
  * ─────────────────────────────────────────────
- * 套餐：月 ¥15 / 季 ¥40 / 半年 ¥70 / 年 ¥100。
+ * 套餐：月 ¥9.9 / 季 ¥25.9 / 半年 ¥49.9 / 终身买断 ¥99。
  * 会员可解除「校招库前 5 页」限制（无限翻页）。
  * mock 模式把到期时间存 localStorage（本地演示）；http 模式走后端 /api/membership。
  * ⚠️ subscribe 为「即时开通」演示；正式上线应接入微信/支付宝，支付成功回调后再开通。
@@ -9,10 +9,10 @@
 import { CONFIG } from '../config.js';
 
 export const PLANS = [
-  { key: 'month',   name: '月度会员', price: 15,  days: 30,  perMonth: '15' },
-  { key: 'quarter', name: '季度会员', price: 40,  days: 90,  perMonth: '13.3' },
-  { key: 'half',    name: '半年会员', price: 70,  days: 180, perMonth: '11.7' },
-  { key: 'year',    name: '年度会员', price: 100, days: 365, perMonth: '8.3', best: true },
+  { key: 'month',   name: '月度会员', price: 9.9,  days: 30,  perMonth: '9.9',  sub: true },
+  { key: 'quarter', name: '季度会员', price: 25.9, days: 90,  perMonth: '8.6',  sub: true },
+  { key: 'half',    name: '半年会员', price: 49.9, days: 180, perMonth: '8.3',  sub: true },
+  { key: 'forever', name: '终身买断', price: 99,   days: 36500, perMonth: '一次买断', best: true, buyout: true },
 ];
 
 const MEMBER_KEY = 'jr_member_until';

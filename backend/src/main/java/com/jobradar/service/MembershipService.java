@@ -25,13 +25,13 @@ public class MembershipService {
         this.userRepo = userRepo;
     }
 
-    /** 套餐 → 天数：月 15 / 季 40 / 半年 70 / 年 100（元）。 */
+    /** 套餐 → 天数：月 9.9 / 季 25.9 / 半年 49.9 / 终身买断 99（元）。 */
     private int daysOf(String plan) {
         return switch (plan == null ? "" : plan) {
             case "month"   -> 30;
             case "quarter" -> 90;
             case "half"    -> 180;
-            case "year"    -> 365;
+            case "forever" -> 36500;   // 终身买断
             default -> throw new IllegalArgumentException("未知套餐：" + plan);
         };
     }
