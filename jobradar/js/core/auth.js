@@ -50,16 +50,53 @@ const authHttp = {
 
 const adapter = CONFIG.USE_MOCK ? authMock : authHttp;
 
-/* 未登录用户免费使用投递入口次数 */
-var _freeApplyKey = 'jr_free_apply';
-function getFreeApplyCount() {
-  var d = JSON.parse(localStorage.getItem(_freeApplyKey) || '{}');
+/* 免费投递次数：未登录 3 次，登录非会员 5 次，会员无限 */
+var _freeApplyKey = 'jr_free_apply';           // 未登录
+var _freeApplyMemberKey = 'jr_free_apply_m';    // 已登录非会员
+var _memberFlagKey = 'jr_member_flag';          // 会员缓存 '1'/'0'
+
+function getCount(key) {
+  var d = JSON.parse(localStorage.getItem(key) || '{}');
   var today = new Date().toDateString();
   if (d.date !== today) { d = { date: today, count: 0 }; }
   return d;
 }
-function saveFreeApplyCount(d) {
-  localStorage.setItem(_freeApplyKey, JSON.stringify(d));
+function saveCount(key, d) {
+  localStorage.setItem(key, JSON.stringify(d));
+}
+function freeLimit() {
+  if (!Auth.isLoggedIn()) return 3;             // 未登录
+  return Auth.isMember() ? Infinity : 5;        // 会员无限 / 非会员5次
+}
+function freeKey() {
+  if (!Auth.isLoggedIn()) return _freeApplyKey;
+  return _freeApplyMemberKey + '_' + (Auth.getAccount() || '');
+}
+
+/* 免费用户用完投递 → 弹开通会员弹窗 → 跳转会员页 */
+function showUpgradeModal() {
+  var existing = document.getElementById('upgrade-modal');
+  if (existing) existing.remove();
+  var ov = document.createElement('div');
+  ov.id = 'upgrade-modal';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,41,.55);display:flex;align-items:center;justify-content:center;z-index:999';
+  ov.innerHTML = `
+    <div style="position:relative;background:#fff;border-radius:16px;padding:32px 28px;max-width:340px;width:90%;box-shadow:0 18px 40px -12px rgba(15,23,41,.3);text-align:center">
+      <div style="font-size:40px;margin-bottom:10px">💎</div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:6px">今日免费投递次数已用完</div>
+      <div style="font-size:13px;color:var(--c-text-2);margin-bottom:18px;line-height:1.6">开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99</div>
+      <button class="btn primary" id="upgrade-go" style="width:100%;padding:11px;border:none;border-radius:8px;background:var(--brand-grad);color:#fff;font-size:14px;font-weight:600;cursor:pointer">立即开通会员</button>
+      <button id="upgrade-cancel" style="width:100%;padding:9px;margin-top:8px;background:none;border:none;color:var(--c-text-3);font-size:13px;cursor:pointer">暂不开通，稍后再看</button>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('#upgrade-go').addEventListener('click', () => {
+    ov.remove();
+    // 跳转会员开通页面
+    var nav = document.querySelector('[data-goto="pricing"]');
+    if (nav) nav.click();
+    else location.href = '/index.html#pricing';
+  });
+  ov.querySelector('#upgrade-cancel').addEventListener('click', () => ov.remove());
 }
 
 export const Auth = window.Auth = {
@@ -67,26 +104,49 @@ export const Auth = window.Auth = {
   getUser()    { return localStorage.getItem(USER_KEY) || ''; },
   getAccount() { return localStorage.getItem(ACCT_KEY) || ''; },
   isLoggedIn() { return !!localStorage.getItem(TOKEN_KEY); },
-  logout()     { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(ACCT_KEY); localStorage.removeItem(USER_KEY); location.reload(); },
+  logout()     { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(ACCT_KEY); localStorage.removeItem(USER_KEY); localStorage.removeItem(_memberFlagKey); location.reload(); },
   async login(a, p)          { const r = await adapter.login(a, p);          save(r.token, r.account, r.displayName); return r; },
   async register(a, dn, p)   { const r = await adapter.register(a, dn, p);  save(r.token, r.account, r.displayName); return r; },
 
-  /** 未登录用户免费试用投递入口（每天3次），用完弹登录 */
+  /** 会员缓存：登录后调用 syncMemberStatus() 从后端拉取并缓存 */
+  setMemberStatus(member) { localStorage.setItem(_memberFlagKey, member ? '1' : '0'); },
+  isMember() { return localStorage.getItem(_memberFlagKey) === '1'; },
+  async syncMemberStatus() {
+    try {
+      const { Membership } = await import('./membership.js');
+      const st = await Membership.status();
+      Auth.setMemberStatus(!!st.member);
+      return !!st.member;
+    } catch { Auth.setMemberStatus(false); return false; }
+  },
+
+  /** 投递入口次数控制：会员无限 / 登录非会员5次 / 未登录3次 */
   tryFreeApply(url) {
-    var d = getFreeApplyCount();
-    if (d.count >= 3) {
-      var m = document.getElementById('auth-modal');
-      if (m) { m.style.display = 'flex'; }
-      var err = document.getElementById('auth-error');
-      if (err) err.textContent = '今日免费次数已用完，登录后无限使用';
+    var isGuest = !Auth.isLoggedIn();
+    var limit = freeLimit();
+    if (limit === Infinity) {                       // 会员：直接打开
+      if (url) window.open(url, '_blank', 'noopener');
+      return true;
+    }
+    var key = freeKey();
+    var d = getCount(key);
+    if (d.count >= limit) {
+      if (isGuest) {
+        var m = document.getElementById('auth-modal');
+        if (m) { m.style.display = 'flex'; }
+        var err = document.getElementById('auth-error');
+        if (err) err.textContent = '今日免费次数已用完，登录后每天可免费查看 5 次';
+      } else {
+        showUpgradeModal();
+      }
       return false;
     }
     d.count++;
-    saveFreeApplyCount(d);
-    var left = 3 - d.count;
+    saveCount(key, d);
+    var left = limit - d.count;
     var toast = document.getElementById('toast');
     if (toast) {
-      toast.textContent = '已使用 ' + d.count + '/3 次免费查看' + (left > 0 ? '（还剩 ' + left + ' 次）' : '');
+      toast.textContent = '已使用 ' + d.count + '/' + limit + ' 次免费查看' + (left > 0 ? '（还剩 ' + left + ' 次）' : '');
       toast.className = 'toast show';
       setTimeout(function() { toast.className = 'toast'; }, 2500);
     }
@@ -94,9 +154,11 @@ export const Auth = window.Auth = {
     return true;
   },
 
-  /** 剩余免费次数（用于提示文案） */
+  /** 剩余免费次数（用于按钮提示文案） */
   freeApplyLeft() {
-    var d = getFreeApplyCount();
-    return Math.max(0, 3 - d.count);
+    var limit = freeLimit();
+    if (limit === Infinity) return 0;
+    var d = getCount(freeKey());
+    return Math.max(0, limit - d.count);
   }
 };

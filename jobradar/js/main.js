@@ -50,6 +50,8 @@ renderAccount();
 wireAuthModal();
 guardAnonymousClicks();
 initResumeShowcase();
+// 已登录用户加载时同步会员状态（决定投递次数/会员权益）
+if (Auth.isLoggedIn()) { Auth.syncMemberStatus(); }
 
 /* 简历模板展示条：关闭后不再显示 */
 function initResumeShowcase() {
@@ -211,12 +213,14 @@ function wireAuthModal() {
     try {
       if (mode === 'login') {
         await Auth.login(a, p);
+        await Auth.syncMemberStatus();   // 缓存会员状态，决定投递次数
         closeAuth();
         renderAccount();
         showToast('欢迎回来，' + (Auth.getUser() || a));
       } else {
         // 注册：账号即昵称
         await Auth.register(a, a, p);
+        await Auth.syncMemberStatus();
         closeAuth();
         renderAccount();
         showToast('注册成功！欢迎，' + a);
