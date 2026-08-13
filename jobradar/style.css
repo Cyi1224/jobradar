@@ -160,6 +160,15 @@ body {
 .nav-sub   { font-size: 13px; color: var(--c-text-2); margin-top: 2px; }
 .nav-menu  { padding: 12px 10px; flex: 1; overflow-y: auto; }
 .nav-footer{ padding: 10px 10px 14px; border-top: 1px solid var(--c-border); }
+
+/* 底部联系作者文字 */
+.nav-contact-text {
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--c-border);
+  font-size: 10.5px; line-height: 1.7;
+  color: var(--c-text-3);
+  text-align: center;
+}
 .nav-item {
   position: relative;
   display: flex; align-items: center; gap: 12px;
@@ -1149,6 +1158,7 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   /* 显示前 5 个 + 个人中心始终可见 */
   .nav-item:nth-child(n+6):not(.nav-item-profile) { display: none; }
   .nav-item-profile i { color: var(--brand); }
+  .nav-contact-text { display: none; }   /* 移动端底部导航不显示联系作者 */
 
   /* 主区域全宽，底部留出 58px 给导航栏 */
   .main { min-width: 0; width: 100%; }
