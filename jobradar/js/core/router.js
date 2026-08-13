@@ -18,9 +18,6 @@ export function switchPage(pageId) {
   const navEl = document.querySelector(`.nav-item[data-page="${pageId}"]`);
   if (navEl) navEl.classList.add('active');
 
-  // 懒加载该页面的视图模块（已加载则忽略）
-  if (window.__loadView) window.__loadView(pageId);
-
   updateBackBtn(pageId);
   window.scrollTo(0, 0);
 }
