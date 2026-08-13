@@ -53,6 +53,14 @@ initResumeShowcase();
 // 已登录用户加载时同步会员状态（决定投递次数/会员权益）
 if (Auth.isLoggedIn()) { Auth.syncMemberStatus(); }
 
+/* 登录/注册成功后移除页面上的注册引导与 CTA 卡片 */
+function removeRegPrompts() {
+  ['reg-cta', 'reg-banner', 'resume-banner'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  });
+}
+
 /* 简历模板展示条：关闭后不再显示 */
 function initResumeShowcase() {
   const bar = document.getElementById('resume-showcase');
@@ -216,6 +224,7 @@ function wireAuthModal() {
         await Auth.syncMemberStatus();   // 缓存会员状态，决定投递次数
         closeAuth();
         renderAccount();
+        removeRegPrompts();              // 移除注册引导/CTA
         showToast('欢迎回来，' + (Auth.getUser() || a));
       } else {
         // 注册：账号即昵称
@@ -223,6 +232,7 @@ function wireAuthModal() {
         await Auth.syncMemberStatus();
         closeAuth();
         renderAccount();
+        removeRegPrompts();
         showToast('注册成功！欢迎，' + a);
         showOnboarding();
       }

@@ -231,6 +231,13 @@ export function initJobdb() {
     renderPagination(topPager);
     renderPagination(footer);
     updateBannerCount();
+    // 已登录：移除任何残留的注册CTA/引导横幅
+    if (Auth.isLoggedIn()) {
+      const cta = document.getElementById('reg-cta');
+      if (cta) cta.remove();
+      const bn = document.getElementById('reg-banner');
+      if (bn) bn.remove();
+    }
     // 未登录浏览到第3页时弹出注册引导，或底部常驻CTA
     if (!Auth.isLoggedIn()) {
       if (currentPage >= 3) showRegBanner();
@@ -258,16 +265,26 @@ export function initJobdb() {
     }
   }
 
-  /* 未登录底部CTA卡片 */
+  /* 未登录底部CTA卡片（已登录或用户关闭后不再显示） */
   function showRegCTA(totalJobs) {
     if (document.getElementById('reg-cta')) return;
+    // 用户手动关闭过，不再显示
+    if (localStorage.getItem('jr_cta_closed') === '1') return;
     const cta = document.createElement('div');
     cta.id = 'reg-cta';
-    cta.style.cssText = 'padding:24px 20px;margin-top:16px;background:linear-gradient(135deg,var(--brand),#6366F1);border-radius:12px;text-align:center;color:#fff';
-    cta.innerHTML = '<div style="font-size:24px;margin-bottom:6px">📊</div>' +
+    cta.style.cssText = 'position:relative;padding:24px 20px;margin-top:16px;background:linear-gradient(135deg,var(--brand),#6366F1);border-radius:12px;text-align:center;color:#fff';
+    cta.innerHTML = '<button class="reg-cta-x" title="关闭" style="position:absolute;top:8px;right:10px;width:26px;height:26px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:16px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1">×</button>' +
+      '<div style="font-size:24px;margin-bottom:6px">📊</div>' +
       '<div style="font-size:16px;font-weight:700;margin-bottom:4px">加入 ' + totalJobs + ' 个校招岗位的管理</div>' +
       '<div style="font-size:13px;opacity:0.85;margin-bottom:12px">一键追踪投递进度，AI 匹配推荐，在线制作简历</div>' +
       '<button class="btn" data-auth-open style="background:#fff;color:var(--brand);padding:10px 32px;font-size:14px;font-weight:600;border-radius:8px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1)">免费注册</button>';
+    // 关闭按钮：点击后移除并记住（不再显示）
+    cta.querySelector('.reg-cta-x').addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      cta.remove();
+      localStorage.setItem('jr_cta_closed', '1');
+    });
     const footer = document.getElementById('jdb-footer');
     if (footer) footer.parentNode.insertBefore(cta, footer);
     else {
