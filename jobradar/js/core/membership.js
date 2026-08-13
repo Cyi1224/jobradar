@@ -9,9 +9,9 @@
 import { CONFIG } from '../config.js';
 
 export const PLANS = [
-  { key: 'month',   name: '月度会员', price: 9.9,  days: 30,  perMonth: '9.9',  sub: true },
-  { key: 'quarter', name: '季度会员', price: 25.9, days: 90,  perMonth: '8.6',  sub: true },
-  { key: 'half',    name: '半年会员', price: 49.9, days: 180, perMonth: '8.3',  sub: true },
+  { key: 'month',   name: '1 个月会员', price: 9.9,  days: 30,  perMonth: '9.9',  sub: true },
+  { key: 'quarter', name: '3 个月会员', price: 25.9, days: 90,  perMonth: '8.6',  sub: true },
+  { key: 'half',    name: '6 个月会员', price: 49.9, days: 180, perMonth: '8.3',  sub: true },
   { key: 'forever', name: '终身买断', price: 99,   days: 36500, perMonth: '一次买断', best: true, buyout: true },
 ];
 

@@ -32,7 +32,7 @@ export function initPricing() {
             <ul class="pricing-feats">
               <li><i class="ti ti-check"></i>解锁校招信息库全部岗位</li>
               <li><i class="ti ti-check"></i>无限翻页，不限前 5 页</li>
-              <li><i class="ti ti-check"></i>${p.buyout ? '一次付费 · 终身有效' : '有效期 ' + p.days + ' 天（可叠加续费）'}</li>
+              <li><i class="ti ti-check"></i>${p.buyout ? '一次付费 · 终身有效' : '使用 ' + p.name + '（可叠加续费）'}</li>
             </ul>
             <button class="btn primary pricing-buy" data-plan="${p.key}">${p.buyout ? '立即买断' : '立即开通'}</button>
           </div>`).join('')}

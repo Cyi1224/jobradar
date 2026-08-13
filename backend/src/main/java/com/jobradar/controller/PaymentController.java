@@ -37,7 +37,7 @@ public class PaymentController {
     private static final Map<String, String> PLAN_PRICE = Map.of(
             "month", "9.9", "quarter", "25.9", "half", "49.9", "forever", "99");
     private static final Map<String, String> PLAN_NAME = Map.of(
-            "month", "月度会员", "quarter", "季度会员", "half", "半年会员", "forever", "终身买断");
+            "month", "1个月会员", "quarter", "3个月会员", "half", "6个月会员", "forever", "终身买断");
 
     public PaymentController(OrderRepository orderRepo,
                              MembershipService membershipService,
