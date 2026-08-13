@@ -9,16 +9,7 @@ import { CONFIG } from './config.js';
 import { Auth } from './core/auth.js';
 window.Auth = Auth;  // 暴露给全局，供 inline onclick 使用
 import { initRouter } from './core/router.js';
-import { initDashboard } from './views/dashboard.js';
-import { initApplications } from './views/applications.js';
 import { initJobdb } from './views/jobdb.js';
-import { initAddjob } from './views/addjob.js';
-import { initAimatch } from './views/aimatch.js';
-import { initReview } from './views/review.js';
-import { initResumeEditor } from './views/resumeeditor.js';
-import { initAutofill } from './views/autofill.js';
-import { initProfile } from './views/profile.js';
-import { initPricing } from './views/pricing.js';
 import { showToast } from './core/toast.js';
 
 /* ── 百度统计 — 仅线上生效 ── */
@@ -33,18 +24,29 @@ if (CONFIG.BAIDU_TONGJI_ID && (location.hostname === 'jobradar.xin' || location.
   })();
 }
 
-/* ── 装配业务模块（登录与否都先把页面渲染出来）── */
+/* ── 视图模块懒加载（按页面按需加载，减少首屏 JS；已加载不重复初始化）── */
+const VIEW_INIT = {
+  dashboard:    () => import('./views/dashboard.js').then(m => m.initDashboard()),
+  applications: () => import('./views/applications.js').then(m => m.initApplications()),
+  addjob:       () => import('./views/addjob.js').then(m => m.initAddjob()),
+  aimatch:      () => import('./views/aimatch.js').then(m => m.initAimatch()),
+  review:       () => import('./views/review.js').then(m => m.initReview()),
+  resume:       () => import('./views/resumeeditor.js').then(m => m.initResumeEditor()),
+  autofill:     () => import('./views/autofill.js').then(m => m.initAutofill()),
+  profile:      () => import('./views/profile.js').then(m => m.initProfile()),
+  pricing:      () => import('./views/pricing.js').then(m => m.initPricing()),
+};
+const loadedViews = new Set(['jobdb']);   // jobdb 已在首屏初始化
+window.__loadView = (page) => {
+  if (loadedViews.has(page) || !VIEW_INIT[page]) return Promise.resolve();
+  loadedViews.add(page);
+  return VIEW_INIT[page]().catch(() => {});
+};
+
+/* ── 首屏必需：路由 + 校招信息库（默认首页）+ 总览 ── */
 initRouter();
-initDashboard();
-initApplications();
 initJobdb();
-initAddjob();
-initAimatch();
-initReview();
-initResumeEditor();
-initAutofill();
-initProfile();
-initPricing();
+window.__loadView('dashboard');
 
 renderAccount();
 wireAuthModal();
