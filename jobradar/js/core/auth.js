@@ -50,11 +50,24 @@ const authHttp = {
 
 const adapter = CONFIG.USE_MOCK ? authMock : authHttp;
 
-/* 免费投递次数：未登录 3 次，登录非会员 5 次，会员无限 */
+/* 免费投递次数：未登录 3 次，登录非会员 5 次，会员无限。
+   反薅羊毛：按「设备指纹」计数（换账号无效），并以后端 IP 计数为准（换号/清缓存无效）。 */
 var _freeApplyKey = 'jr_free_apply';           // 未登录
 var _freeApplyMemberKey = 'jr_free_apply_m';    // 已登录非会员
 var _memberFlagKey = 'jr_member_flag';          // 会员缓存 '1'/'0'
+var _deviceKey = 'jr_device_id';                // 设备指纹
 
+/* 设备指纹：首次生成并持久化，不随账号变化 */
+function deviceId() {
+  var id = localStorage.getItem(_deviceKey);
+  if (!id) {
+    id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem(_deviceKey, id);
+  }
+  return id;
+}
+
+/* 本地计数（按设备，换账号不重置） */
 function getCount(key) {
   var d = JSON.parse(localStorage.getItem(key) || '{}');
   var today = new Date().toDateString();
@@ -68,9 +81,9 @@ function freeLimit() {
   if (!Auth.isLoggedIn()) return 3;             // 未登录
   return Auth.isMember() ? Infinity : 5;        // 会员无限 / 非会员5次
 }
+/* 次数 key 使用设备ID（而非账号），换账号共享同一设备次数 */
 function freeKey() {
-  if (!Auth.isLoggedIn()) return _freeApplyKey;
-  return _freeApplyMemberKey + '_' + (Auth.getAccount() || '');
+  return (Auth.isLoggedIn() ? _freeApplyMemberKey : _freeApplyKey) + '_' + deviceId();
 }
 
 /* 免费用户用完投递 → 弹开通会员弹窗 → 跳转会员页 */
@@ -84,7 +97,8 @@ function showUpgradeModal() {
     <div style="position:relative;background:#fff;border-radius:16px;padding:32px 28px;max-width:340px;width:90%;box-shadow:0 18px 40px -12px rgba(15,23,41,.3);text-align:center">
       <div style="font-size:40px;margin-bottom:10px">💎</div>
       <div style="font-size:17px;font-weight:700;margin-bottom:6px">今日免费投递次数已用完</div>
-      <div style="font-size:13px;color:var(--c-text-2);margin-bottom:18px;line-height:1.6">开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99</div>
+      <div style="font-size:13px;color:var(--c-text-2);margin-bottom:10px;line-height:1.6">开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99</div>
+      <div style="font-size:12px;color:#B45309;background:#FEF3C7;border-radius:8px;padding:8px 12px;margin-bottom:16px;line-height:1.5">⚠️ 免费次数按<b>设备与 IP</b> 统计，用完即锁定，<b>更换账号无效</b>。请开通会员后畅享无限投递。</div>
       <button class="btn primary" id="upgrade-go" style="width:100%;padding:11px;border:none;border-radius:8px;background:var(--brand-grad);color:#fff;font-size:14px;font-weight:600;cursor:pointer">立即开通会员</button>
       <button id="upgrade-cancel" style="width:100%;padding:9px;margin-top:8px;background:none;border:none;color:var(--c-text-3);font-size:13px;cursor:pointer">暂不开通，稍后再看</button>
     </div>`;
@@ -120,7 +134,7 @@ export const Auth = window.Auth = {
     } catch { Auth.setMemberStatus(false); return false; }
   },
 
-  /** 投递入口次数控制：会员无限 / 登录非会员5次 / 未登录3次 */
+  /** 投递入口次数控制：会员无限 / 登录非会员5次 / 未登录3次（设备指纹+IP双重限制） */
   tryFreeApply(url) {
     var isGuest = !Auth.isLoggedIn();
     var limit = freeLimit();
@@ -128,17 +142,17 @@ export const Auth = window.Auth = {
       if (url) window.open(url, '_blank', 'noopener');
       return true;
     }
+    // 本地设备计数预检
     var key = freeKey();
     var d = getCount(key);
     if (d.count >= limit) {
-      if (isGuest) {
-        var m = document.getElementById('auth-modal');
-        if (m) { m.style.display = 'flex'; }
-        var err = document.getElementById('auth-error');
-        if (err) err.textContent = '今日免费次数已用完，登录后每天可免费查看 5 次';
-      } else {
-        showUpgradeModal();
-      }
+      Auth.onFreeUsedUp(isGuest);
+      return false;
+    }
+    // 后端 IP 计数校验（防换号/清缓存）——同步计数，用 fetch 同步返回
+    var ipOk = Auth.checkIpLimit();
+    if (!ipOk) {
+      Auth.onFreeUsedUp(isGuest);
       return false;
     }
     d.count++;
@@ -152,6 +166,50 @@ export const Auth = window.Auth = {
     }
     if (url) window.open(url, '_blank', 'noopener');
     return true;
+  },
+
+  /** 次数用尽：未登录弹登录，登录非会员弹开通会员 */
+  onFreeUsedUp(isGuest) {
+    if (isGuest) {
+      var m = document.getElementById('auth-modal');
+      if (m) { m.style.display = 'flex'; }
+      var err = document.getElementById('auth-error');
+      if (err) err.textContent = '今日免费次数已用完（设备/IP 限制），登录后每天可免费查看 5 次';
+    } else {
+      showUpgradeModal();
+    }
+  },
+
+  /** 后端 IP 计数校验：同一 IP 每日最多 limit 次（登录非会员5 / 未登录3） */
+  checkIpLimit() {
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', CONFIG.API_BASE + '/api/apply-limit/check', false);  // 同步，等后端判定
+      xhr.setRequestHeader('User-Agent', 'Mozilla/5.0');
+      xhr.send(null);
+      if (xhr.status === 200) {
+        var r = JSON.parse(xhr.responseText || '{}');
+        if (r.used !== undefined) {
+          // 同步后端已用次数到本地，保证两边一致
+          var key = freeKey();
+          var d = { date: new Date().toDateString(), count: r.used };
+          saveCount(key, d);
+          return r.allowed === true;
+        }
+      }
+    } catch (e) { /* 后端不可用则退化为本地计数 */ }
+    return true;
+  },
+
+  /** 使用一次后通知后端计数（消耗一次 IP 额度） */
+  async reportIpUse() {
+    try {
+      const res = await fetch(CONFIG.API_BASE + '/api/apply-limit/use', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      await res.text();
+    } catch (e) { /* 静默 */ }
   },
 
   /** 剩余免费次数（用于按钮提示文案） */

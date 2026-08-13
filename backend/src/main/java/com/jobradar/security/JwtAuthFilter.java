@@ -30,6 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/jobs")) return false;   // 校招信息库公开：匿名可浏览（前 5 页）
         if (path.startsWith("/api/admin/")) return false; // 管理后台使用 X-Admin-Key 认证
         if (path.startsWith("/api/payment/notify")) return false; // zpay 支付回调（服务端请求，无登录态）
+        if (path.startsWith("/api/apply-limit")) return false;    // 投递次数（游客也需查询 IP 额度）
         return true;
     }
 

@@ -344,7 +344,7 @@ export function initJobdb() {
     if (chip) { const c = chip.dataset.chip; filters[c] = !filters[c]; chip.classList.toggle('active', filters[c]); applyFilters(); return; }
     const vb = e.target.closest('.jdb-view');
     if (vb && vb.dataset.view !== view) { view = vb.dataset.view; pageEl.querySelectorAll('.jdb-view').forEach((b) => b.classList.toggle('active', b === vb)); render(); }
-    // 投递入口：会员无限 / 登录非会员5次 / 未登录3次
+    // 投递入口：会员无限 / 登录非会员5次 / 未登录3次（设备+IP双重限制）
     const applyBtn = e.target.closest('.jc-apply-btn');
     if (applyBtn) {
       e.preventDefault();
@@ -352,12 +352,12 @@ export function initJobdb() {
       var url = applyBtn.dataset.url;
       if (url && window.Auth) {
         var ok = window.Auth.tryFreeApply(url);
-        // 使用一次后刷新剩余次数提示（非会员）
-        if (window.Auth.isLoggedIn() && !window.Auth.isMember()) {
-          render();
-        } else if (!ok) {
-          render();
+        if (ok) {
+          // 使用成功 → 通知后端消耗一次 IP 额度
+          window.Auth.reportIpUse();
         }
+        // 刷新剩余次数提示（非会员）
+        render();
       }
       return;
     }
