@@ -2,6 +2,7 @@
  * views/profile.js — 「个人中心」页面视图
  */
 import { ProfileStore } from '../data/profile.js';
+import { Membership } from '../core/membership.js';
 import { showToast } from '../core/toast.js';
 
 function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v ?? ''; }
@@ -13,13 +14,37 @@ export function initProfile() {
     setText('profile-avatar', (u.name || '?')[0]);
     setText('profile-name', u.name || '未设置');
     setText('profile-sub', [u.school, u.major, u.gradYear ? u.gradYear + '届' : ''].filter(Boolean).join(' · '));
-    setText('profile-plan', u.plan || '免费版');
     setVal('profile-f-name',       u.name);
     setVal('profile-f-email',      u.email);
     setVal('profile-f-school',     u.school);
     setVal('profile-f-major',      u.major);
     setVal('profile-f-intentjob',  u.intentJob);
     setVal('profile-f-intentcity', u.intentCity);
+  }).catch(() => {});
+
+  // 名片会员状态：读取真实会员信息（不依赖 profile.plan 占位字段）
+  Membership.status().then((st) => {
+    const el = document.getElementById('profile-plan');
+    const untilEl = document.getElementById('profile-plan-until');
+    if (el) {
+      if (st.member) {
+        el.textContent = '会员';
+        el.className = 'badge b-green';
+      } else {
+        el.textContent = '免费版';
+        el.className = 'badge b-gray';
+      }
+    }
+    // 会员显示到期时间
+    if (untilEl) {
+      if (st.member && st.memberUntil) {
+        const d = new Date(st.memberUntil);
+        const s = isNaN(d) ? '' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        untilEl.textContent = s ? '会员至 ' + s + ' · 剩余 ' + st.daysLeft + ' 天' : '';
+      } else {
+        untilEl.textContent = '';
+      }
+    }
   }).catch(() => {});
 
   const saveBtn = document.getElementById('profile-save-btn');

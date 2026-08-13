@@ -30,6 +30,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final long WINDOW_FAST  =  1 * 60_000;  // 1 分钟
 
     private LimitConfig limitFor(String path) {
+        if (path.startsWith("/api/payment/notify"))  // zpay 回调：不参与 IP 限流
+            return null;
         if (path.startsWith("/api/auth/"))
             return new LimitConfig("auth", 20, WINDOW_AUTH);
         if (path.startsWith("/api/membership/subscribe"))

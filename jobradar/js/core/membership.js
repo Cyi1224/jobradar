@@ -51,6 +51,10 @@ async function req(path, options = {}) {
 const memHttp = {
   status() { return req('/membership'); },
   subscribe(plan) { return req('/membership/subscribe', { method: 'POST', body: JSON.stringify({ plan }) }); },
+  /** 创建 zpay 支付订单 → { payurl, qrcode, img, orderNo, money } */
+  createOrder(plan, type) { return req('/payment/create-order', { method: 'POST', body: JSON.stringify({ plan, type }) }); },
+  /** 查询订单支付状态 → { paid }（已支付会自动开通会员） */
+  orderStatus(orderNo) { return req('/payment/order-status?orderNo=' + encodeURIComponent(orderNo)); },
 };
 
 function statusFromLocal() {

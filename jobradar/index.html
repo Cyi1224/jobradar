@@ -161,9 +161,7 @@
       <div class="nav-item"        data-page="review"       role="menuitem"><i class="ti ti-chart-pie"></i>投递复盘</div>
       <div class="nav-item"        data-page="benefits"     role="menuitem"><i class="ti ti-gift"></i>免费福利</div>
       <div class="nav-item nav-item-profile" data-page="profile" role="menuitem"><i class="ti ti-user-circle"></i>个人中心</div>
-      <!-- 定价栏目暂时隐藏，待支付接入后恢复
-      <div class="nav-item"        data-page="pricing"      role="menuitem"><i class="ti ti-crown"></i>定价</div>
-      -->
+      <div class="nav-item"        data-page="pricing"      role="menuitem"><i class="ti ti-crown"></i>开通会员</div>
     </div>
     <div class="nav-footer">
       <div class="nav-account" id="nav-account"></div>
@@ -830,7 +828,7 @@
       </div>
     </div>
 
-    <!-- ════════ 定价（暂时隐藏，待支付接入后恢复）════════
+    <!-- ════════ 开通会员 ════════ -->
     <div id="page-pricing" class="page">
       <div class="topbar">
         <div class="topbar-title">开通会员 · 解锁全部校招信息</div>
@@ -839,7 +837,6 @@
         <div id="pricing-body"></div>
       </div>
     </div>
-    ════════ 定价结束 ════════ -->
 
     <!-- ════════ 个人中心 ════════ -->
     <div id="page-profile" class="page">
@@ -853,7 +850,10 @@
           <div>
             <div style="font-size:16px;font-weight:500" id="profile-name">张三</div>
             <div style="font-size:13px;color:var(--c-text-2)" id="profile-sub"></div>
-            <span class="badge b-blue" style="margin-top:6px;display:inline-flex" id="profile-plan">免费版</span>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="badge b-blue" id="profile-plan">免费版</span>
+              <span style="font-size:12px;color:var(--c-text-2)" id="profile-plan-until"></span>
+            </div>
           </div>
           <button class="btn primary" style="margin-left:auto">升级会员</button>
         </div>

@@ -81,6 +81,11 @@ public class BotFilter extends OncePerRequestFilter {
             chain.doFilter(req, res);
             return;
         }
+        // zpay 支付回调放行（服务端请求，UA 可能含 java/ 等被误拦）
+        if (path.startsWith("/api/payment/notify")) {
+            chain.doFilter(req, res);
+            return;
+        }
 
         // 1. 检查是否在黑名单中
         Long unblockAt = ipBlockUntil.get(ip);

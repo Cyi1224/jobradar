@@ -30,6 +30,13 @@ jobradar:
     allowed-origins: "*"        # dev 放行全部；生产收窄，见 application-prod.yml
   payment:
     demo-mode: true             # dev：允许「点击即开通」便于联调；生产为 false（见 application-prod.yml）
+    zpay:
+      pid: 2026070309233444
+      key: 335Y7XNoUFJ6ua6CLjKFGSiB0lu9qptd
+      submit-url: https://zpayz.cn/mapi.php
+      notify-url: http://localhost:8080/api/payment/notify
+      return-url: http://localhost:8123/index.html
+      test-amount: 0.01          # 本地联调：强制用 0.01 元测试支付；生产不配此项走真实价格
   # 每日同步脚本 POST /api/jobs/sync 所需的鉴权 token，与 givemeoc_sync.py 的 JOBRADAR_SYNC_TOKEN 保持一致
   sync-token: changeme          # 生产请改为强随机串，用环境变量 JOBRADAR_SYNC_TOKEN 覆盖（见 application-prod.yml）
   admin:

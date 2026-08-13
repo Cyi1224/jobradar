@@ -18,7 +18,7 @@ import { initReview } from './views/review.js';
 import { initResumeEditor } from './views/resumeeditor.js';
 import { initAutofill } from './views/autofill.js';
 import { initProfile } from './views/profile.js';
-// import { initPricing } from './views/pricing.js'; // 待支付接入后恢复
+import { initPricing } from './views/pricing.js';
 import { showToast } from './core/toast.js';
 
 /* ── 百度统计 — 仅线上生效 ── */
@@ -44,7 +44,7 @@ initReview();
 initResumeEditor();
 initAutofill();
 initProfile();
-// initPricing(); // 待支付接入后恢复
+initPricing();
 
 renderAccount();
 wireAuthModal();

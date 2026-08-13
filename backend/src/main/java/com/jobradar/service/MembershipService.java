@@ -53,13 +53,21 @@ public class MembershipService {
     /** 开通/续费：从「现有到期时间与当前时间的较大者」往后叠加套餐时长。 */
     @Transactional
     public MembershipDTO subscribe(String plan) {
-        int days = daysOf(plan);
         User u = currentUser();
+        grantByOrder(u.getId(), plan);
+        return toDTO(u);
+    }
+
+    /** 支付回调发货：按 userId 开通会员（不依赖 UserContext，回调线程无登录态）。 */
+    @Transactional
+    public void grantByOrder(Long userId, String plan) {
+        int days = daysOf(plan);
+        User u = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime base = (u.getMemberUntil() != null && u.getMemberUntil().isAfter(now)) ? u.getMemberUntil() : now;
         u.setMemberUntil(base.plusDays(days));
         userRepo.save(u);
-        return toDTO(u);
     }
 
     private User currentUser() {
