@@ -92,8 +92,9 @@ function freeKey() {
   return (Auth.isLoggedIn() ? _freeApplyMemberKey : _freeApplyKey) + '_' + deviceId();
 }
 
-/* 免费用户用完投递 → 弹开通会员弹窗 → 跳转会员页 */
-function showUpgradeModal() {
+/* 通用开通会员弹窗：默认投递文案，可传自定义标题/描述 */
+function showUpgradeModal(opts) {
+  opts = opts || {};
   var existing = document.getElementById('upgrade-modal');
   if (existing) existing.remove();
   var ov = document.createElement('div');
@@ -101,11 +102,11 @@ function showUpgradeModal() {
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,41,.55);display:flex;align-items:center;justify-content:center;z-index:999';
   ov.innerHTML = `
     <div style="position:relative;background:#fff;border-radius:16px;padding:32px 28px;max-width:340px;width:90%;box-shadow:0 18px 40px -12px rgba(15,23,41,.3);text-align:center">
-      <div style="font-size:40px;margin-bottom:10px">💎</div>
-      <div style="font-size:17px;font-weight:700;margin-bottom:6px">今日免费投递次数已用完</div>
-      <div style="font-size:13px;color:var(--c-text-2);margin-bottom:10px;line-height:1.6">开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99</div>
-      <div style="font-size:12px;color:#B45309;background:#FEF3C7;border-radius:8px;padding:8px 12px;margin-bottom:16px;line-height:1.5">⚠️ 免费次数按<b>设备与 IP</b> 统计，用完即锁定，<b>更换账号无效</b>。请开通会员后畅享无限投递。</div>
-      <button class="btn primary" id="upgrade-go" style="width:100%;padding:11px;border:none;border-radius:8px;background:var(--brand-grad);color:#fff;font-size:14px;font-weight:600;cursor:pointer">立即开通会员</button>
+      <div style="font-size:40px;margin-bottom:10px">${opts.icon || '💎'}</div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:6px">${opts.title || '今日免费投递次数已用完'}</div>
+      <div style="font-size:13px;color:var(--c-text-2);margin-bottom:10px;line-height:1.6">${opts.desc || '开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99'}</div>
+      ${opts.warn ? `<div style="font-size:12px;color:#B45309;background:#FEF3C7;border-radius:8px;padding:8px 12px;margin-bottom:16px;line-height:1.5">${opts.warn}</div>` : ''}
+      <button class="btn primary" id="upgrade-go" style="width:100%;padding:11px;border:none;border-radius:8px;background:var(--brand-grad);color:#fff;font-size:14px;font-weight:600;cursor:pointer">${opts.btnText || '立即开通会员'}</button>
       <button id="upgrade-cancel" style="width:100%;padding:9px;margin-top:8px;background:none;border:none;color:var(--c-text-3);font-size:13px;cursor:pointer">暂不开通，稍后再看</button>
     </div>`;
   document.body.appendChild(ov);
@@ -138,6 +139,19 @@ export const Auth = window.Auth = {
       Auth.setMemberStatus(!!st.member);
       return !!st.member;
     } catch { Auth.setMemberStatus(false); return false; }
+  },
+
+  /** 会员功能门禁：非会员弹开通窗口并返回 false；会员/匿名（仅预览）返回 true */
+  requireMember(feature) {
+    if (Auth.isMember()) return true;
+    showUpgradeModal({
+      title: '此功能仅会员可用',
+      desc: feature === 'resume'
+        ? '开通会员即可<b>无限次</b>使用简历编辑器、导出 PDF、AI 简历解析<br>1 个月仅 ¥9.9，终身买断 ¥99'
+        : '开通会员即可<b>无限次</b>使用该功能<br>1 个月仅 ¥9.9，终身买断 ¥99',
+      warn: '💡 免费用户可预览简历编辑器，保存与导出需开通会员',
+    });
+    return false;
   },
 
   /** 投递入口次数控制：会员无限 / 登录非会员5次 / 未登录3次（设备指纹+IP双重限制） */

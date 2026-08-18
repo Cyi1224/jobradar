@@ -3,6 +3,7 @@
  * 支持 PDF / DOCX / TXT 上传，纯本地正则规则提取，无需 AI 接口。
  */
 import { ProfileStore } from '../data/profile.js';
+import { Auth } from '../core/auth.js';
 import { showToast } from '../core/toast.js';
 
 /* ────────────────────────────────────────────────
@@ -231,6 +232,8 @@ function showRawText(text) {
 ──────────────────────────────────────────────── */
 async function handleFile(file) {
   if (!file) return;
+  // 简历解析为会员功能
+  if (!Auth.isMember()) { Auth.requireMember('resume'); return; }
   if (file.size > 10 * 1024 * 1024) { showToast('文件不能超过 10MB'); return; }
 
   showStatus(`正在解析 ${file.name}…`);
@@ -333,6 +336,7 @@ export function initAutofill() {
     $('af-paste-area').style.display = 'none';
   });
   $('af-parse-paste-btn')?.addEventListener('click', () => {
+    if (!Auth.isMember()) { Auth.requireMember('resume'); return; }
     const text = $('af-paste-text')?.value?.trim();
     if (!text) { showToast('请先粘贴简历文本'); return; }
     showStatus('正在识别字段…');

@@ -5,6 +5,7 @@
  * 自动保存、导出 PDF（浏览器打印另存）。文档存 localStorage，纯前端、离线可用。
  */
 import { showToast } from '../core/toast.js';
+import { Auth } from '../core/auth.js';
 import { ResumeDocStore } from '../data/resumedoc.js';
 
 const HISTORY_MAX = 50;
@@ -67,6 +68,12 @@ export function initResumeEditor() {
   function snapshot() { return JSON.stringify(doc); }
   async function save() {
     collectStyles();
+    // 非会员：拦截保存到后端，但允许本地编辑预览
+    if (!Auth.isMember()) {
+      dirty = false;
+      setStatus('保存需开通会员');
+      return;
+    }
     try { await ResumeDocStore.save(doc); dirty = false; setStatus('已保存'); }
     catch { setStatus('未保存'); }
   }
@@ -451,8 +458,14 @@ export function initResumeEditor() {
     document.getElementById('re-undo')?.addEventListener('click', undo);
     document.getElementById('re-undo-btn')?.addEventListener('click', undo);
     document.getElementById('re-redo')?.addEventListener('click', redo);
-    document.getElementById('re-save')?.addEventListener('click', () => { save(); showToast('已保存'); });
-    document.getElementById('re-export')?.addEventListener('click', () => { save(); window.print(); });
+    document.getElementById('re-save')?.addEventListener('click', () => {
+      if (!Auth.isMember()) { Auth.requireMember('resume'); return; }
+      save(); showToast('已保存');
+    });
+    document.getElementById('re-export')?.addEventListener('click', () => {
+      if (!Auth.isMember()) { Auth.requireMember('resume'); return; }
+      save(); window.print();
+    });
     document.getElementById('re-reset')?.addEventListener('click', () => {
       if (!confirm('重置为示例简历？当前内容将被覆盖。')) return;
       structural(() => { doc = defaultDoc(); }); syncControls();
