@@ -474,22 +474,34 @@ export function initResumeEditor() {
       }, 200);
     });
 
-    /* 免费用户网页内预览弹窗：展示 A4 效果，无真实保存能力 */
+    /* 免费用户网页内预览弹窗：精美 A4 纸张效果，无真实保存能力 */
     function showPreviewModal() {
       var existing = document.getElementById('resume-preview-modal');
       if (existing) existing.remove();
       var ov = document.createElement('div');
       ov.id = 'resume-preview-modal';
-      ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,41,.6);z-index:998;display:flex;align-items:center;justify-content:center';
-      // 克隆画布内容到 A4 预览容器
+      ov.style.cssText = 'position:fixed;inset:0;background:linear-gradient(135deg,#0f1729 0%,#1e293b 100%);z-index:998;display:flex;flex-direction:column;align-items:center;padding:20px';
+      // 克隆画布，保留原始 760px 标准排版（内边距/字号变量正常生效）
       var preview = canvas.cloneNode(true);
-      preview.style.cssText = 'width:210mm;min-height:297mm;background:#fff;padding:14mm;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,.2)';
+      preview.style.cssText = 'width:760px;min-height:1050px;margin:0;box-shadow:0 20px 60px rgba(0,0,0,.35);border-radius:4px';
       preview.querySelectorAll('.re-grip,.re-del,.re-add-mini,.re-add-entry,.re-photo-del').forEach(function(e){ e.style.display='none'; });
-      preview.querySelectorAll('.re-f').forEach(function(e){ e.style.background='transparent'; e.style.boxShadow='none'; e.contentEditable='false'; });
-      // 预览为纯展示：移除所有编辑/操作类，拦截内部点击
+      preview.querySelectorAll('.re-f').forEach(function(e){ e.style.background='transparent'; e.style.boxShadow='none'; e.contentEditable='false'; e.style.outline='none'; });
+      // 预览为纯展示：禁用编辑态所有高亮（hover/focus/占位符）
       preview.setAttribute('contenteditable', 'false');
+      preview.querySelectorAll('.re-f').forEach(function(e){ e.style.cursor='default'; });
       preview.querySelectorAll('[data-act],[data-path]').forEach(function(e){ e.removeAttribute('data-act'); e.removeAttribute('data-path'); });
-      ov.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:96vw;max-height:94vh;overflow:auto;padding:16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:14px;font-weight:600;color:var(--c-text-1)">📄 简历预览</div><button class="pv-close" style="border:none;background:var(--c-bg-1);color:var(--c-text-2);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px">关闭</button></div><div style="width:210mm;min-height:280mm;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12);border-radius:4px;overflow:hidden;padding:14mm;margin:0 auto">' + preview.outerHTML + '</div></div>';
+      ov.innerHTML = `
+        <style>#resume-preview-modal .re-f:hover, #resume-preview-modal .re-f:focus { background:transparent !important; box-shadow:none !important; } #resume-preview-modal .re-photo:not(.has) { display:none !important; }</style>
+        <div style="width:100%;max-width:820px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">📄</span>
+            <span style="font-size:15px;font-weight:600;color:#fff">简历预览</span>
+            <span style="font-size:12px;color:#94a3b8;background:rgba(255,255,255,.1);padding:3px 10px;border-radius:20px">A4 效果 · 保存需开通会员</span>
+          </div>
+          <button class="pv-close" style="border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;padding:6px 16px;border-radius:8px;cursor:pointer;font-size:13px">关闭预览</button>
+        </div>
+        <div style="width:100%;max-width:820px;overflow:auto;background:rgba(0,0,0,.25);border-radius:12px;padding:24px;display:flex;justify-content:center">${preview.outerHTML}</div>
+        <div style="width:100%;max-width:820px;margin-top:14px;text-align:center;font-size:12px;color:#94a3b8">💎 开通会员后即可导出精美 PDF 简历 · 1 个月仅 ¥9.9</div>`;
       document.body.appendChild(ov);
       ov.querySelector('.pv-close').addEventListener('click', function(){ ov.remove(); });
       ov.addEventListener('click', function(e){ if (e.target === ov) ov.remove(); });
