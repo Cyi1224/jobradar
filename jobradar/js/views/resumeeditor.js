@@ -463,8 +463,16 @@ export function initResumeEditor() {
       save(); showToast('已保存');
     });
     document.getElementById('re-export')?.addEventListener('click', () => {
-      if (!Auth.isMember()) { Auth.requireMember('resume'); return; }
-      save(); window.print();
+      if (Auth.isMember()) {
+        save(); window.print();
+        return;
+      }
+      // 免费用户：先打开打印预览让用户看到简历效果，关闭后再弹开通会员窗
+      save();
+      window.print();   // 打印对话框关闭后返回
+      setTimeout(() => {
+        if (!Auth.isMember()) Auth.requireMember('resume');
+      }, 200);
     });
     document.getElementById('re-reset')?.addEventListener('click', () => {
       if (!confirm('重置为示例简历？当前内容将被覆盖。')) return;
