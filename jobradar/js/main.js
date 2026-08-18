@@ -238,7 +238,10 @@ function wireAuthModal() {
       }
     } catch (err) {
       errEl.textContent = err.message || '操作失败，请重试';
-      submit.disabled = false; submit.textContent = prev; busy = false;
+      // 失败后 3 秒冷却，防止连点触发限流
+      submit.disabled = true; submit.textContent = '请稍候…';
+      busy = true;
+      setTimeout(() => { submit.disabled = false; submit.textContent = prev; busy = false; }, 3000);
     }
   }
   submit.addEventListener('click', submitForm);

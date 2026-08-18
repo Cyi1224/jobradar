@@ -24,7 +24,13 @@ async function post(path, body) {
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || data.reason || data.error || `请求失败 ${res.status}`);
+  if (!res.ok) {
+    // 429 限流：给用户友好提示，避免误解为系统故障
+    if (res.status === 429) {
+      throw new Error('操作太频繁了，请稍等片刻再试（约1分钟）');
+    }
+    throw new Error(data.message || data.reason || data.error || `请求失败 ${res.status}`);
+  }
   return data;
 }
 
