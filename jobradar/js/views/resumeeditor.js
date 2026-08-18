@@ -467,13 +467,33 @@ export function initResumeEditor() {
         save(); window.print();
         return;
       }
-      // 免费用户：先打开打印预览让用户看到简历效果，关闭后再弹开通会员窗
-      save();
-      window.print();   // 打印对话框关闭后返回
+      // 免费用户：弹出网页内 A4 预览（不调用真实打印，无法真正保存）
+      showPreviewModal();
       setTimeout(() => {
         if (!Auth.isMember()) Auth.requireMember('resume');
       }, 200);
     });
+
+    /* 免费用户网页内预览弹窗：展示 A4 效果，无真实保存能力 */
+    function showPreviewModal() {
+      var existing = document.getElementById('resume-preview-modal');
+      if (existing) existing.remove();
+      var ov = document.createElement('div');
+      ov.id = 'resume-preview-modal';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,41,.6);z-index:998;display:flex;align-items:center;justify-content:center';
+      // 克隆画布内容到 A4 预览容器
+      var preview = canvas.cloneNode(true);
+      preview.style.cssText = 'width:210mm;min-height:297mm;background:#fff;padding:14mm;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,.2)';
+      preview.querySelectorAll('.re-grip,.re-del,.re-add-mini,.re-add-entry,.re-photo-del').forEach(function(e){ e.style.display='none'; });
+      preview.querySelectorAll('.re-f').forEach(function(e){ e.style.background='transparent'; e.style.boxShadow='none'; e.contentEditable='false'; });
+      // 预览为纯展示：移除所有编辑/操作类，拦截内部点击
+      preview.setAttribute('contenteditable', 'false');
+      preview.querySelectorAll('[data-act],[data-path]').forEach(function(e){ e.removeAttribute('data-act'); e.removeAttribute('data-path'); });
+      ov.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:96vw;max-height:94vh;overflow:auto;padding:16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:14px;font-weight:600;color:var(--c-text-1)">📄 简历预览</div><button class="pv-close" style="border:none;background:var(--c-bg-1);color:var(--c-text-2);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px">关闭</button></div><div style="width:210mm;min-height:280mm;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12);border-radius:4px;overflow:hidden;padding:14mm;margin:0 auto">' + preview.outerHTML + '</div></div>';
+      document.body.appendChild(ov);
+      ov.querySelector('.pv-close').addEventListener('click', function(){ ov.remove(); });
+      ov.addEventListener('click', function(e){ if (e.target === ov) ov.remove(); });
+    }
     document.getElementById('re-reset')?.addEventListener('click', () => {
       if (!confirm('重置为示例简历？当前内容将被覆盖。')) return;
       structural(() => { doc = defaultDoc(); }); syncControls();
