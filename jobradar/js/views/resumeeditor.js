@@ -480,7 +480,7 @@ export function initResumeEditor() {
       if (existing) existing.remove();
       var ov = document.createElement('div');
       ov.id = 'resume-preview-modal';
-      ov.style.cssText = 'position:fixed;inset:0;background:linear-gradient(135deg,#0f1729 0%,#1e293b 100%);z-index:998;display:flex;flex-direction:column;align-items:center;padding:20px';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:998;display:flex;align-items:center;justify-content:center;padding:20px';
       // 克隆画布，保留原始 760px 标准排版（内边距/字号变量正常生效）
       var preview = canvas.cloneNode(true);
       preview.style.cssText = 'width:760px;min-height:1050px;margin:0;box-shadow:0 20px 60px rgba(0,0,0,.35);border-radius:4px';
@@ -492,19 +492,36 @@ export function initResumeEditor() {
       preview.querySelectorAll('[data-act],[data-path]').forEach(function(e){ e.removeAttribute('data-act'); e.removeAttribute('data-path'); });
       ov.innerHTML = `
         <style>#resume-preview-modal .re-f:hover, #resume-preview-modal .re-f:focus { background:transparent !important; box-shadow:none !important; } #resume-preview-modal .re-photo:not(.has) { display:none !important; }</style>
-        <div style="width:100%;max-width:820px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:16px">📄</span>
-            <span style="font-size:15px;font-weight:600;color:#fff">简历预览</span>
-            <span style="font-size:12px;color:#94a3b8;background:rgba(255,255,255,.1);padding:3px 10px;border-radius:20px">A4 效果 · 保存需开通会员</span>
+        <div style="background:#fff;border-radius:16px;max-width:860px;width:100%;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.3);overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--c-border);background:var(--c-bg-1)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:15px">📄</span>
+              <span style="font-size:14px;font-weight:600;color:var(--c-text-1)">简历预览</span>
+              <span style="font-size:11px;color:var(--c-text-3);background:var(--c-bg-2);padding:2px 10px;border-radius:20px">A4 效果</span>
+            </div>
+            <button class="pv-close" style="border:1px solid var(--c-border);background:var(--c-bg-0);color:var(--c-text-2);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px">关闭</button>
           </div>
-          <button class="pv-close" style="border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;padding:6px 16px;border-radius:8px;cursor:pointer;font-size:13px">关闭预览</button>
-        </div>
-        <div style="width:100%;max-width:820px;overflow:auto;background:rgba(0,0,0,.25);border-radius:12px;padding:24px;display:flex;justify-content:center">${preview.outerHTML}</div>
-        <div style="width:100%;max-width:820px;margin-top:14px;text-align:center;font-size:12px;color:#94a3b8">💎 开通会员后即可导出精美 PDF 简历 · 1 个月仅 ¥9.9</div>`;
+          <div style="flex:1;overflow:auto;background:var(--c-bg-2);padding:20px;display:flex;justify-content:center">${preview.outerHTML}</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid var(--c-border);background:var(--c-bg-1)">
+            <button class="pv-upgrade" style="background:linear-gradient(135deg,#2563EB,#1A56DB);color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.3)">💎 立即开通会员</button>
+            <span style="font-size:12px;color:var(--c-text-2)">保存并导出 PDF · 1 个月仅 ¥9.9 · 终身买断 ¥99</span>
+          </div>
+        </div>`;
       document.body.appendChild(ov);
       ov.querySelector('.pv-close').addEventListener('click', function(){ ov.remove(); });
       ov.addEventListener('click', function(e){ if (e.target === ov) ov.remove(); });
+      // 立即开通：暂存简历 → 关闭预览 → 跳转会员页
+      ov.querySelector('.pv-upgrade').addEventListener('click', function(e) {
+        e.stopPropagation();
+        collectStyles();
+        // 先暂存到本地，防止跳转后简历丢失（会员开通后回来可恢复）
+        try { localStorage.setItem('jr_resume_doc', JSON.stringify(doc)); } catch (e2) {}
+        save();                       // 会员直接保存；非会员静默（已暂存本地）
+        ov.remove();
+        var nav = document.querySelector('[data-goto="pricing"]');
+        if (nav) nav.click();
+        else location.href = '/index.html#pricing';
+      });
     }
     document.getElementById('re-reset')?.addEventListener('click', () => {
       if (!confirm('重置为示例简历？当前内容将被覆盖。')) return;
@@ -527,7 +544,23 @@ export function initResumeEditor() {
   syncControls();
   render();
   (async () => {
-    try { const saved = await ResumeDocStore.load(); if (saved && saved.sections) doc = saved; } catch { /* 匿名/失败：用默认 */ }
+    try {
+      // 优先恢复本地暂存的简历（非会员跳转开通会员后返回）
+      const local = localStorage.getItem('jr_resume_doc');
+      if (local) {
+        const ld = JSON.parse(local);
+        if (ld && ld.sections) {
+          doc = ld;
+          localStorage.removeItem('jr_resume_doc');   // 恢复后清除暂存
+        } else {
+          const saved = await ResumeDocStore.load();
+          if (saved && saved.sections) doc = saved;
+        }
+      } else {
+        const saved = await ResumeDocStore.load();
+        if (saved && saved.sections) doc = saved;
+      }
+    } catch { /* 失败用默认 */ }
     history = [snapshot()]; hPtr = 0;
     syncControls();
     render();
