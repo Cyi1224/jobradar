@@ -56,7 +56,7 @@ const authHttp = {
 
 const adapter = CONFIG.USE_MOCK ? authMock : authHttp;
 
-/* 免费投递次数：未登录 3 次，登录非会员 5 次，会员无限。
+/* 免费投递次数：未登录 3 次，登录非会员 3 次，会员无限。
    反薅羊毛：按「设备指纹」计数（换账号无效），并以后端 IP 计数为准（换号/清缓存无效）。 */
 var _freeApplyKey = 'jr_free_apply';           // 未登录
 var _freeApplyMemberKey = 'jr_free_apply_m';    // 已登录非会员
@@ -85,7 +85,7 @@ function saveCount(key, d) {
 }
 function freeLimit() {
   if (!Auth.isLoggedIn()) return 3;             // 未登录
-  return Auth.isMember() ? Infinity : 5;        // 会员无限 / 非会员5次
+  return Auth.isMember() ? Infinity : 3;        // 会员无限 / 非会员3次
 }
 /* 次数 key 使用设备ID（而非账号），换账号共享同一设备次数 */
 function freeKey() {
@@ -194,7 +194,7 @@ export const Auth = window.Auth = {
       var m = document.getElementById('auth-modal');
       if (m) { m.style.display = 'flex'; }
       var err = document.getElementById('auth-error');
-      if (err) err.textContent = '今日免费次数已用完（设备/IP 限制），登录后每天可免费查看 5 次';
+      if (err) err.textContent = '今日免费次数已用完（设备/IP 限制），登录后每天可免费查看 3 次';
     } else {
       showUpgradeModal();
     }

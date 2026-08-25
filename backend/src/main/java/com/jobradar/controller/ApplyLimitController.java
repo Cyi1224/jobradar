@@ -51,12 +51,12 @@ public class ApplyLimitController {
         return Map.of("used", used, "limit", limit, "allowed", used < limit);
     }
 
-    /** 会员不限；登录非会员 5；游客 3。 */
+    /** 会员不限；登录非会员 3；游客 3。 */
     private int limitFor() {
         Long uid = UserContext.get();
         if (uid == null) return 3;                       // 未登录
         if (membershipService.isCurrentUserMember()) return -1;  // 会员不限制
-        return 5;                                        // 登录非会员 5 次
+        return 3;                                        // 登录非会员 3 次
     }
 
     private String key(HttpServletRequest req) {
