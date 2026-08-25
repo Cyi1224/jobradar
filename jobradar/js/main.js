@@ -49,6 +49,7 @@ initPricing();
 renderAccount();
 wireAuthModal();
 guardAnonymousClicks();
+guardMemberPages();
 initResumeShowcase();
 // 已登录用户加载时同步会员状态（决定投递次数/会员权益）
 if (Auth.isLoggedIn()) { Auth.syncMemberStatus(); }
@@ -102,6 +103,23 @@ function guardAnonymousClicks() {
     e.preventDefault();
     e.stopPropagation();
     openAuth();
+  }, true);
+}
+
+/* ── 会员功能页拦截：已登录非会员点「我的投递」/「添加岗位」页面内任意位置 → 弹开通会员窗 ── */
+function guardMemberPages() {
+  const MEMBER_PAGES = { 'page-applications': 'applications', 'page-addjob': 'addjob' };
+  document.addEventListener('click', (e) => {
+    if (!Auth.isLoggedIn() || Auth.isMember()) return;     // 未登录或会员放行
+    if (e.target.closest('#upgrade-modal')) return;        // 弹窗内部正常交互
+    if (e.target.closest('#auth-modal')) return;           // 登录弹窗
+    if (e.target.closest('.nav')) return;                  // 导航栏：放行（可切换页面）
+    const pid = Object.keys(MEMBER_PAGES).find((id) => e.target.closest('#' + id));
+    if (!pid) return;
+    // 免费用户点击会员功能页 → 弹开通会员窗
+    e.preventDefault();
+    e.stopPropagation();
+    Auth.requireMember(MEMBER_PAGES[pid]);
   }, true);
 }
 

@@ -144,13 +144,21 @@ export const Auth = window.Auth = {
   /** 会员功能门禁：非会员弹开通窗口并返回 false；会员/匿名（仅预览）返回 true */
   requireMember(feature) {
     if (Auth.isMember()) return true;
-    showUpgradeModal({
-      title: '此功能仅会员可用',
-      desc: feature === 'resume'
-        ? '开通会员即可<b>无限次</b>使用简历编辑器、导出 PDF、AI 简历解析<br>1 个月仅 ¥9.9，终身买断 ¥99'
-        : '开通会员即可<b>无限次</b>使用该功能<br>1 个月仅 ¥9.9，终身买断 ¥99',
-      warn: '💡 免费用户可预览简历编辑器，保存与导出需开通会员',
-    });
+    var desc, warn;
+    if (feature === 'resume') {
+      desc = '开通会员即可<b>无限次</b>使用简历编辑器、导出 PDF、AI 简历解析<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      warn = '💡 免费用户可预览简历编辑器，保存与导出需开通会员';
+    } else if (feature === 'applications') {
+      desc = '开通会员即可<b>无限次</b>管理投递进度、批量更新状态、投递复盘分析<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      warn = '💡 免费用户可查看投递列表，操作与编辑需开通会员';
+    } else if (feature === 'addjob') {
+      desc = '开通会员即可<b>无限次</b>手动添加岗位、管理投递记录<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      warn = '💡 免费用户可查看添加表单，保存岗位需开通会员';
+    } else {
+      desc = '开通会员即可<b>无限次</b>使用该功能<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      warn = '';
+    }
+    showUpgradeModal({ title: '此功能仅会员可用', desc: desc, warn: warn });
     return false;
   },
 
