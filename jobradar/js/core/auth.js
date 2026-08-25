@@ -57,9 +57,9 @@ const authHttp = {
 const adapter = CONFIG.USE_MOCK ? authMock : authHttp;
 
 /* 免费投递次数：未登录 3 次，登录非会员 3 次，会员无限。
-   反薅羊毛：按「设备指纹」计数（换账号无效），并以后端 IP 计数为准（换号/清缓存无效）。 */
-var _freeApplyKey = 'jr_free_apply';           // 未登录
-var _freeApplyMemberKey = 'jr_free_apply_m';    // 已登录非会员
+   反薅羊毛：按「设备指纹」计数（换账号无效），并以后端 IP 计数为准（换号/清缓存无效）。
+   次数 key 不区分登录态，统一按设备指纹计数——登录/退出/换号共享同一设备额度。 */
+var _freeApplyKey = 'jr_free_apply';           // 统一（登录/未登录共用）
 var _memberFlagKey = 'jr_member_flag';          // 会员缓存 '1'/'0'
 var _deviceKey = 'jr_device_id';                // 设备指纹
 
@@ -87,9 +87,9 @@ function freeLimit() {
   if (!Auth.isLoggedIn()) return 3;             // 未登录
   return Auth.isMember() ? Infinity : 3;        // 会员无限 / 非会员3次
 }
-/* 次数 key 使用设备ID（而非账号），换账号共享同一设备次数 */
+/* 次数 key 统一使用设备ID（不区分登录态），换账号/退出登录共享同一设备额度 */
 function freeKey() {
-  return (Auth.isLoggedIn() ? _freeApplyMemberKey : _freeApplyKey) + '_' + deviceId();
+  return _freeApplyKey + '_' + deviceId();
 }
 
 /* 通用开通会员弹窗：默认投递文案，可传自定义标题/描述 */
@@ -196,7 +196,11 @@ export const Auth = window.Auth = {
       var err = document.getElementById('auth-error');
       if (err) err.textContent = '今日免费次数已用完（设备/IP 限制），登录后每天可免费查看 3 次';
     } else {
-      showUpgradeModal();
+      showUpgradeModal({
+        title: '今日免费投递次数已用完',
+        desc: '开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99',
+        warn: '⚠️ 免费次数按<b>设备与 IP</b> 统计，用完即锁定，<b>更换账号或退出登录均无效</b>。请开通会员后畅享无限投递。',
+      });
     }
   },
 
