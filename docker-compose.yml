@@ -34,7 +34,7 @@ services:
       DB_USER: root
       DB_PASSWORD: ${DB_PASSWORD:-jobradar123}
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-strong-32byte-random-secret-string}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8123}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8123,http://localhost:8080}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-change-me-to-a-strong-admin-key}
       OFFERBIU_SYNC_MAXPAGES: 10
       # JVM heap: 384MB — SQL 聚合后不再需要大堆，留内存给 OS/MySQL
