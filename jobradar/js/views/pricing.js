@@ -6,7 +6,6 @@
  */
 import { Membership, PLANS } from '../core/membership.js';
 import { Auth } from '../core/auth.js';
-import { JobStore } from '../data/catalog.js';
 import { showToast } from '../core/toast.js';
 
 export function initPricing() {
@@ -17,9 +16,6 @@ export function initPricing() {
   async function render() {
     let st = { member: false, plan: '免费版', daysLeft: 0 };
     try { st = await Membership.status(); } catch { /* 匿名/未登录：按免费版展示 */ }
-    // 拉取真实岗位数做信任/紧迫感锚点（公开接口，失败不影响页面）
-    let stats = { total: 0, today: 0, open: 0 };
-    try { stats = await JobStore.stats(); } catch { /* 接口不可用时降级 */ }
     // 终身买断折算月单价，做价格锚定（99 / 12 ≈ 8.3）
     const buyoutPerMonth = (PLANS.find((p) => p.buyout)?.price / 12).toFixed(1);
 
@@ -28,19 +24,6 @@ export function initPricing() {
         ${st.member
           ? `<i class="ti ti-crown"></i> 当前：<b>会员</b> · 剩余 ${st.daysLeft} 天 · 已解锁全部校招信息`
           : `<i class="ti ti-user"></i> 当前：<b>免费版</b> · 校招信息库仅可查看前 5 页`}
-      </div>
-
-      <!-- 紧迫感 / 锚定横幅 -->
-      <div class="pricing-hero">
-        <div class="pricing-hero-left">
-          <div class="pricing-hero-tag">🔥 秋招季特惠 · 错过等一年</div>
-          <div class="pricing-hero-title">${stats.today ? `今日新增 <b>${stats.today}</b> 个岗位，解锁后全部可查` : '解锁全部校招岗位，不错过任何一个机会'}</div>
-        </div>
-        <div class="pricing-hero-stats">
-          <div class="pricing-hero-stat"><b>${stats.total || '—'}</b><span>已收录岗位</span></div>
-          <div class="pricing-hero-stat"><b>${stats.today || '—'}</b><span>今日新增</span></div>
-          <div class="pricing-hero-stat"><b>${stats.open || '—'}</b><span>可投递入口</span></div>
-        </div>
       </div>
 
       <div class="pricing-grid">
@@ -58,31 +41,6 @@ export function initPricing() {
             <button class="btn primary pricing-buy" data-plan="${p.key}">${p.buyout ? '立即买断' : '立即开通'}</button>
           </div>`).join('')}
       </div>
-
-      <!-- 会员全部权益 -->
-      <div class="pricing-section-title">开通会员，解锁全部能力</div>
-      <div class="pricing-features-grid">
-        <div class="pf-item"><i class="ti ti-database"></i><div><b>全部校招岗位</b><span>无限翻页，不再限制前 5 页</span></div></div>
-        <div class="pf-item"><i class="ti ti-external-link"></i><div><b>无限投递入口</b><span>查看投递链接不限次数（免费版 3 次/天）</span></div></div>
-        <div class="pf-item"><i class="ti ti-file-cv"></i><div><b>简历编辑器</b><span>在线编辑、导出 PDF，AI 简历解析</span></div></div>
-        <div class="pf-item"><i class="ti ti-cpu"></i><div><b>AI 匹配推荐</b><span>根据简历智能匹配适合你的岗位</span></div></div>
-        <div class="pf-item"><i class="ti ti-chart-pie"></i><div><b>投递复盘分析</b><span>投递漏斗数据，帮你优化策略</span></div></div>
-        <div class="pf-item"><i class="ti ti-send"></i><div><b>无限投递管理</b><span>批量添加、更新状态，进度一目了然</span></div></div>
-      </div>
-
-      <!-- 免费 vs 会员 对比表 -->
-      <div class="pricing-section-title">免费版 vs 会员</div>
-      <table class="pricing-compare-table">
-        <thead><tr><th>功能</th><th>免费版</th><th>会员</th></tr></thead>
-        <tbody>
-          <tr><td>校招信息库</td><td>前 5 页</td><td class="ok">全部岗位 · 无限翻页</td></tr>
-          <tr><td>投递入口查看</td><td>3 次 / 天</td><td class="ok">无限次</td></tr>
-          <tr><td>简历编辑 / 导出 PDF</td><td>仅预览</td><td class="ok">保存 · 导出</td></tr>
-          <tr><td>AI 匹配推荐</td><td>不可用</td><td class="ok">无限使用</td></tr>
-          <tr><td>投递复盘分析</td><td>不可用</td><td class="ok">完整分析</td></tr>
-          <tr><td>投递管理</td><td>基础</td><td class="ok">无限 · 批量</td></tr>
-        </tbody>
-      </table>
 
       <div class="pricing-note"><i class="ti ti-info-circle"></i> 支付由 Zpay 安全担保，支持微信 / 支付宝。支付成功后自动开通会员，秒到账。</div>
     `;

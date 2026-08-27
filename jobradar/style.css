@@ -590,42 +590,6 @@ tr.data-row:hover td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
 .pricing-note { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--c-text-3); margin-top: 18px; }
 .pricing-note > i { font-size: 14px; }
 
-/* ── 定价页：紧迫感 / 锚定横幅 ── */
-.pricing-hero {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-  background: linear-gradient(135deg, #1e3a8a, #4f46e5); color: #fff; border-radius: 14px;
-  padding: 20px 22px; margin-bottom: 20px;
-}
-.pricing-hero-tag {
-  display: inline-block; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
-  padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-bottom: 8px;
-}
-.pricing-hero-title { font-size: 17px; font-weight: 700; line-height: 1.5; }
-.pricing-hero-title b { color: #fde68a; }
-.pricing-hero-stats { display: flex; gap: 22px; }
-.pricing-hero-stat { text-align: center; }
-.pricing-hero-stat b { display: block; font-size: 22px; font-weight: 800; line-height: 1.2; }
-.pricing-hero-stat span { font-size: 12px; opacity: .8; }
-
-/* ── 定价页：会员全部权益 ── */
-.pricing-section-title { font-size: 15px; font-weight: 700; margin: 26px 0 12px; }
-.pricing-features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
-.pf-item {
-  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
-  border: 1px solid var(--c-border); border-radius: 10px; background: var(--c-bg-0);
-}
-.pf-item > i { font-size: 18px; color: var(--brand); margin-top: 1px; }
-.pf-item b { display: block; font-size: 13px; }
-.pf-item span { font-size: 12px; color: var(--c-text-3); }
-
-/* ── 定价页：免费 vs 会员 对比表 ── */
-.pricing-compare-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--c-bg-0); border-radius: 12px; overflow: hidden; }
-.pricing-compare-table th, .pricing-compare-table td { padding: 10px 14px; border-bottom: 1px solid var(--c-border); text-align: left; }
-.pricing-compare-table th { background: #f8fafc; font-weight: 600; color: var(--c-text-2); }
-.pricing-compare-table td:first-child { font-weight: 600; }
-.pricing-compare-table td.ok { color: var(--green); font-weight: 600; text-align: right; }
-@media (max-width: 640px) { .pricing-compare-table th, .pricing-compare-table td { padding: 8px 10px; font-size: 12px; } }
-
 /* ── 校招信息库：Hero ── */
 .jdb-hero { margin-bottom: 18px; }
 .jdb-hero-label { font-size: 12.5px; color: var(--brand); font-weight: 600; margin-bottom: 10px; }
