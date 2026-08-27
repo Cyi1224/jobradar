@@ -65,8 +65,13 @@ public class MembershipService {
         User u = userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime base = (u.getMemberUntil() != null && u.getMemberUntil().isAfter(now)) ? u.getMemberUntil() : now;
+        // 首次开通（当前非会员）时记录开通时间；续费/叠加不覆盖已有开通时间
+        boolean wasMember = u.getMemberUntil() != null && u.getMemberUntil().isAfter(now);
+        LocalDateTime base = wasMember ? u.getMemberUntil() : now;
         u.setMemberUntil(base.plusDays(days));
+        if (!wasMember && u.getMemberSince() == null) {
+            u.setMemberSince(now);
+        }
         userRepo.save(u);
     }
 

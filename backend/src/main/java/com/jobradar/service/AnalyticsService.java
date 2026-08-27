@@ -330,11 +330,10 @@ public class AnalyticsService {
 
     // ═══════════════════════ 会员账户列表 ═══════════════════════
 
-    /** 所有开通过会员的用户（含已过期），按到期时间倒序，带剩余天数与状态 */
+    /** 所有开通过会员的用户（含已过期），按开通时间倒序，带开通/到期时间、剩余天数与状态 */
     @Transactional(readOnly = true)
     public Map<String, Object> memberUsers(int page, int size) {
-        var pageResult = userRepo.findByMemberUntilIsNotNullOrderByMemberUntilDesc(
-                PageRequest.of(page, size));
+        var pageResult = userRepo.findMemberUsersByPaidTime(PageRequest.of(page, size));
 
         LocalDateTime now = LocalDateTime.now();
         List<Map<String, Object>> list = pageResult.getContent().stream().map(u -> {
@@ -343,6 +342,9 @@ public class AnalyticsService {
             m.put("account", u.getAccount());
             m.put("displayName", u.getDisplayName());
             m.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : null);
+            // 开通时间：member_since 为空（历史数据未记录）回退注册时间
+            LocalDateTime since = u.getMemberSince() != null ? u.getMemberSince() : u.getCreatedAt();
+            m.put("memberSince", since != null ? since.toString() : null);
             m.put("memberUntil", u.getMemberUntil() != null ? u.getMemberUntil().toString() : null);
             boolean active = u.getMemberUntil() != null && u.getMemberUntil().isAfter(now);
             long daysLeft = u.getMemberUntil() != null

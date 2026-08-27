@@ -27,6 +27,9 @@ public class User {
 
     private LocalDateTime memberUntil;   // 会员到期时间；null 或已过期 = 免费版
 
+    /** 首次开通会员的时间（付费/授权），用于会员列表按开通时间排序；null 则回退注册时间 */
+    private LocalDateTime memberSince;
+
     public User() {}
 
     public User(String account, String displayName, String passwordHash) {
@@ -47,4 +50,6 @@ public class User {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getMemberUntil() { return memberUntil; }
     public void setMemberUntil(LocalDateTime memberUntil) { this.memberUntil = memberUntil; }
+    public LocalDateTime getMemberSince() { return memberSince; }
+    public void setMemberSince(LocalDateTime memberSince) { this.memberSince = memberSince; }
 }

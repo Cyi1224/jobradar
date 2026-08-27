@@ -366,9 +366,9 @@ tr:hover td{ background:var(--brand-light); }
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>ID</th><th>账号</th><th>昵称</th><th>注册时间</th><th>会员到期</th><th>剩余天数</th><th>状态</th></tr>
+          <tr><th>ID</th><th>账号</th><th>昵称</th><th>开通时间</th><th>注册时间</th><th>会员到期</th><th>剩余天数</th><th>状态</th></tr>
         </thead>
-        <tbody id="memberTable"><tr class="loading-row"><td colspan="7">加载中…</td></tr></tbody>
+        <tbody id="memberTable"><tr class="loading-row"><td colspan="8">加载中…</td></tr></tbody>
       </table>
     </div>
     <div class="pagination" id="memberPagination"></div>
@@ -1257,7 +1257,7 @@ async function loadMembers(page) {
     renderMembersTable(data);
   } catch (e) {
     document.getElementById('memberTable').innerHTML =
-      '<tr class="loading-row"><td colspan="7">加载失败：' + esc(e.message) + '</td></tr>';
+      '<tr class="loading-row"><td colspan="8">加载失败：' + esc(e.message) + '</td></tr>';
   }
 }
 
@@ -1271,7 +1271,7 @@ function renderMembersTable(data) {
     `（共 ${total} 人开通过会员）`;
 
   if (!members.length) {
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="7">暂无会员</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="8">暂无会员</td></tr>';
     document.getElementById('memberPagination').innerHTML = '';
     return;
   }
@@ -1279,6 +1279,7 @@ function renderMembersTable(data) {
   tbody.innerHTML = members.map(u => {
     const active = u.status === '有效';
     const createdAt = (u.createdAt || '').replace('T', ' ').substring(0, 16);
+    const memberSince = (u.memberSince || '').replace('T', ' ').substring(0, 16) || '-';
     const memberUntil = u.memberUntil ? u.memberUntil.replace('T', ' ').substring(0, 16) : '-';
     const daysLeft = (active && u.daysLeft != null) ? u.daysLeft + ' 天' : '-';
     return `
@@ -1286,7 +1287,8 @@ function renderMembersTable(data) {
       <td>${u.id}</td>
       <td>${esc(u.account)}</td>
       <td>${esc(u.displayName || '-')}</td>
-      <td>${createdAt}</td>
+      <td style="font-weight:600">${memberSince}</td>
+      <td style="font-size:12px;color:var(--c-text-2)">${createdAt}</td>
       <td style="font-size:12px;color:var(--c-text-2)">${memberUntil}</td>
       <td style="font-size:12px;color:var(--c-text-2)">${daysLeft}</td>
       <td><span class="badge ${active ? 'member' : 'free'}">${u.status}</span></td>
