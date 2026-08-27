@@ -397,6 +397,68 @@ public class AnalyticsService {
         return result;
     }
 
+    // ═══════════════════════ 用户转化漏斗 ═══════════════════════
+
+    /** 用户转化漏斗：独立访客(近N天去重IP) → 新增注册(近N天) → 活跃会员(近N天活跃的有效会员)，含每级转化率。
+     *  三个指标同时间窗，转化率语义干净（<100% 正常）。 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> userFunnel(int days) {
+        LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime now = LocalDateTime.now();
+
+        long visitors = visitLogRepo.countDistinctIpByCreatedAtBetween(start, end);        // 近 N 天独立访客
+        long newRegistered = userRepo.countByCreatedAtBetween(start, end);                 // 近 N 天新增注册
+        long activeMemberUsers = visitLogRepo.countActiveMemberUsersBetween(start, end, now); // 近 N 天活跃的有效会员
+
+        List<Map<String, Object>> funnel = new ArrayList<>();
+        funnel.add(funnelLevel("独立访客", visitors, null));
+        funnel.add(funnelLevel("新增注册", newRegistered, visitors));
+        funnel.add(funnelLevel("活跃会员", activeMemberUsers, newRegistered));
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("days", days);
+        result.put("currentActiveMembers", userRepo.countActiveMembers(now));   // 参考：当前有效会员总数
+        result.put("funnel", funnel);
+        return result;
+    }
+
+    private Map<String, Object> funnelLevel(String label, long count, Long prev) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("label", label);
+        m.put("count", count);
+        m.put("rate", prev != null && prev > 0 ? Math.round(count * 10000.0 / prev) / 100.0 : null);
+        return m;
+    }
+
+    // ═══════════════════════ 经常在线用户 ═══════════════════════
+
+    /** 近 N 天活跃用户：活跃总数 + Top 榜（用户名/访问数/活跃天数/最后活跃） */
+    @Transactional(readOnly = true)
+    public Map<String, Object> activeUsers(int days, int limit) {
+        LocalDateTime start = LocalDate.now().minusDays(days - 1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+
+        long activeCount = visitLogRepo.countDistinctUserIdByCreatedAtBetween(start, end);
+        List<Object[]> rows = visitLogRepo.countTopActiveUsers(start, end, PageRequest.of(0, limit));
+
+        List<Map<String, Object>> top = rows.stream().map(row -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("username", String.valueOf(row[0]));
+            m.put("visits", ((Number) row[1]).longValue());
+            m.put("activeDays", ((Number) row[2]).longValue());
+            String last = row[3] != null ? String.valueOf(row[3]).replace("T", " ") : null;
+            m.put("lastActive", last != null && last.length() >= 16 ? last.substring(0, 16) : last);
+            return m;
+        }).collect(Collectors.toList());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("days", days);
+        result.put("activeCount", activeCount);
+        result.put("top", top);
+        return result;
+    }
+
     // ═══════════════════════ 页面浏览上报 ═══════════════════════
 
     @Transactional

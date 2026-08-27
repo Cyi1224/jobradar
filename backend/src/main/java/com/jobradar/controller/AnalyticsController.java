@@ -82,6 +82,19 @@ public class AnalyticsController {
         return analyticsService.memberStats();
     }
 
+    /** 用户转化漏斗：独立访客 → 注册用户 → 活跃会员 */
+    @GetMapping("/user-funnel")
+    public Map<String, Object> userFunnel(@RequestParam(defaultValue = "30") int days) {
+        return analyticsService.userFunnel(Math.min(days, 90));
+    }
+
+    /** 经常在线用户：近 N 天活跃总数 + Top 榜 */
+    @GetMapping("/active-users")
+    public Map<String, Object> activeUsers(@RequestParam(defaultValue = "7") int days,
+                                           @RequestParam(defaultValue = "20") int limit) {
+        return analyticsService.activeUsers(Math.min(days, 90), Math.min(limit, 100));
+    }
+
     /** 同步历史 */
     @GetMapping("/sync-history")
     public Map<String, Object> syncHistory(@RequestParam(defaultValue = "30") int days) {

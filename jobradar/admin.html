@@ -106,6 +106,15 @@ body{
 .chart-card h3 .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
 .chart-card canvas{ width:100% !important; max-height:300px; }
 
+/* ── 用户转化漏斗 ── */
+.funnel-row{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.funnel-label{ width:76px; font-size:13px; color:var(--c-text-2); flex-shrink:0; }
+.funnel-bar-wrap{ flex:1; background:var(--c-bg-2); border-radius:8px; height:34px; position:relative; overflow:hidden; }
+.funnel-bar{ height:100%; border-radius:8px; background:var(--brand-grad); display:flex; align-items:center; justify-content:flex-end; padding-right:10px; min-width:44px; transition:width .4s ease; }
+.funnel-bar span{ color:#fff; font-size:13px; font-weight:600; }
+.funnel-rate{ width:96px; font-size:12px; color:var(--c-text-3); flex-shrink:0; text-align:right; }
+.funnel-note{ font-size:12px; color:var(--c-text-3); margin-top:6px; padding-top:10px; border-top:1px solid var(--c-bg-2); }
+
 /* ── 最近访问表 ── */
 .table-wrap{ overflow-x:auto; }
 table{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -310,6 +319,19 @@ tr:hover td{ background:var(--brand-light); }
     </div>
   </div>
 
+  <!-- 用户转化漏斗 + 经常在线用户 -->
+  <div class="chart-row">
+    <div class="chart-card">
+      <h3><span class="dot" style="background:var(--brand-2)"></span> 用户转化漏斗 <span style="font-weight:400;font-size:12px;color:var(--c-text-3)" id="funnelSummary"></span></h3>
+      <div id="funnelBody"><div class="empty-state">加载中…</div></div>
+      <div class="funnel-note">三个指标均按所选天数统计（独立访客为去重 IP）。转化率 = 本级 / 上一级。</div>
+    </div>
+    <div class="chart-card">
+      <h3><span class="dot" style="background:var(--green)"></span> 经常在线用户 <span style="font-weight:400;font-size:12px;color:var(--c-text-3)" id="activeUsersSummary"></span></h3>
+      <div id="activeUsersBody"><div class="empty-state">加载中…</div></div>
+    </div>
+  </div>
+
   <!-- 最近访问记录 -->
   <div class="chart-card" style="margin-bottom:28px">
     <h3>📋 最近访问记录</h3>
@@ -454,7 +476,7 @@ async function refreshAll() {
   currentDays = days;
 
   try {
-    const [summary, daily, recent, hourly, sources, regions, jobsStats, members, syncHistory, dauData] = await Promise.all([
+    const [summary, daily, recent, hourly, sources, regions, jobsStats, members, syncHistory, dauData, funnelData, activeUsersData] = await Promise.all([
       apiGet('/api/admin/analytics/summary'),
       apiGet('/api/admin/analytics/daily?days=' + days),
       apiGet('/api/admin/analytics/recent?limit=20'),
@@ -465,6 +487,8 @@ async function refreshAll() {
       apiGet('/api/admin/analytics/members'),
       apiGet('/api/admin/analytics/sync-history?days=' + days),
       apiGet('/api/admin/analytics/dau?days=' + days),
+      apiGet('/api/admin/analytics/user-funnel?days=' + days),
+      apiGet('/api/admin/analytics/active-users?days=' + days + '&limit=20'),
     ]);
 
     renderSummary(summary, jobsStats, members);
@@ -479,6 +503,8 @@ async function refreshAll() {
     renderSyncChart(syncHistory);
     renderSyncBadge(syncHistory);
     renderDauChart(dauData);
+    renderFunnel(funnelData);
+    renderActiveUsers(activeUsersData);
     await loadUsers(0);
 
     const now = new Date();
@@ -1020,6 +1046,62 @@ function renderJobRecruitChart(data) {
     }
   });
   document.getElementById('chartJobRecruit').parentElement.style.height = '280px';
+}
+
+// ── 用户转化漏斗 ──
+function renderFunnel(data) {
+  const body = document.getElementById('funnelBody');
+  if (!body) return;
+  const funnel = data.funnel || [];
+  document.getElementById('funnelSummary').textContent =
+    `（均按近 ${data.days} 天统计 · 当前有效会员 ${fmt(data.currentActiveMembers || 0)} 人）`;
+
+  if (!funnel.length) { body.innerHTML = '<div class="empty-state">暂无数据</div>'; return; }
+
+  const max = Math.max(...funnel.map(f => f.count), 1);
+  body.innerHTML = funnel.map(f => {
+    const pct = Math.max(Math.round(f.count / max * 100), 5);   // 最小宽度保证可见
+    const rateText = f.rate != null ? `转化率 ${f.rate}%` : '—';
+    return `
+      <div class="funnel-row">
+        <div class="funnel-label">${f.label}</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${pct}%"><span>${fmt(f.count)}</span></div></div>
+        <div class="funnel-rate">${rateText}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── 经常在线用户 ──
+function renderActiveUsers(data) {
+  const body = document.getElementById('activeUsersBody');
+  if (!body) return;
+  const top = data.top || [];
+  const days = data.days || 7;
+  document.getElementById('activeUsersSummary').textContent =
+    `（近 ${days} 天活跃 ${fmt(data.activeCount || 0)} 人）`;
+
+  if (!top.length) { body.innerHTML = `<div class="empty-state">近 ${days} 天暂无登录用户</div>`; return; }
+
+  body.innerHTML = `
+    <div style="text-align:center;padding:2px 0 12px">
+      <span style="font-size:32px;font-weight:700;color:var(--brand);font-family:var(--font-display)">${fmt(data.activeCount || 0)}</span>
+      <span style="font-size:13px;color:var(--c-text-2);margin-left:6px">人活跃（近 ${days} 天）</span>
+    </div>
+    <div class="table-wrap" style="max-height:300px;overflow-y:auto">
+      <table>
+        <thead><tr><th>#</th><th>用户名</th><th>访问次数</th><th>活跃天数</th><th>最后活跃</th></tr></thead>
+        <tbody>
+          ${top.map((u, i) => `
+            <tr>
+              <td style="color:var(--c-text-3)">${i + 1}</td>
+              <td><b>${esc(u.username)}</b></td>
+              <td>${fmt(u.visits)}</td>
+              <td>${u.activeDays} 天</td>
+              <td style="font-size:12px;color:var(--c-text-2)">${esc(u.lastActive || '-')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 // ── 最近访问记录表格 ──

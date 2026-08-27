@@ -24,6 +24,14 @@ public interface VisitLogRepository extends JpaRepository<VisitLog, Long> {
     @Query("SELECT COUNT(DISTINCT v.userId) FROM VisitLog v WHERE v.userId IS NOT NULL AND v.createdAt BETWEEN :start AND :end")
     long countDistinctUserIdByCreatedAtBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
+    /** 近 N 天活跃的有效会员数（会员身份 + 期间有访问记录） */
+    @Query("SELECT COUNT(DISTINCT v.userId) FROM VisitLog v WHERE v.userId IS NOT NULL " +
+           "AND v.userId IN (SELECT u.id FROM User u WHERE u.memberUntil IS NOT NULL AND u.memberUntil > :now) " +
+           "AND v.createdAt BETWEEN :start AND :end")
+    long countActiveMemberUsersBetween(@Param("start") LocalDateTime start,
+                                       @Param("end") LocalDateTime end,
+                                       @Param("now") LocalDateTime now);
+
     // ── SQL 端 GROUP BY 聚合（返回聚合结果，不加载实体） ──
 
     /** 按天统计访问量: [date(String), count(Long)] */
@@ -49,6 +57,14 @@ public interface VisitLogRepository extends JpaRepository<VisitLog, Long> {
     /** 每日活跃用户（去重 userId）: [date(String), distinctUserIdCount(Long)] */
     @Query("SELECT FUNCTION('DATE', v.createdAt), COUNT(DISTINCT v.userId) FROM VisitLog v WHERE v.userId IS NOT NULL AND v.createdAt BETWEEN :start AND :end GROUP BY FUNCTION('DATE', v.createdAt) ORDER BY FUNCTION('DATE', v.createdAt)")
     List<Object[]> countDauByDayBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    /** 按用户聚合活跃度 Top N: [username(String), visits(Long), activeDays(Long), lastActive(Timestamp)] */
+    @Query("SELECT v.username, COUNT(v), COUNT(DISTINCT FUNCTION('DATE', v.createdAt)), MAX(v.createdAt) " +
+           "FROM VisitLog v WHERE v.username IS NOT NULL AND v.createdAt BETWEEN :start AND :end " +
+           "GROUP BY v.username ORDER BY COUNT(v) DESC")
+    List<Object[]> countTopActiveUsers(@Param("start") LocalDateTime start,
+                                       @Param("end") LocalDateTime end,
+                                       Pageable pageable);
 
     // ── 分页查询（不加载全部） ──
 
