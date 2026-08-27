@@ -209,6 +209,13 @@ function wireAuthModal() {
   }
   applyMode();
 
+  // 全局入口：供 jobdb 等视图唤起指定模式的登录/注册弹窗（如翻页触达免费上限时引导注册）
+  window.openAuthModal = (targetMode) => {
+    if (targetMode === 'register') mode = 'register';
+    applyMode();
+    openAuth();
+  };
+
   // data-auth-open（登录按钮）/ data-auth-close（关闭、遮罩）
   document.addEventListener('click', (e) => {
     if (e.target.closest('[data-auth-open]')) { e.preventDefault(); openAuth(); }

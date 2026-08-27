@@ -174,15 +174,19 @@ export function initJobdb() {
       : `<button class="pg-num${n === currentPage ? ' active' : ''}" data-pg="${n}">${n + 1}</button>`
     ).join('');
 
+    // 免费用户到最后一页：下一页变成"解锁全部"，点击弹升级/注册引导而不是加载空页
+    const atCap = capped && currentPage >= tp - 1;
+    const nextBtnHtml = atCap
+      ? `<button class="pg-arrow pg-cap-next" data-pg="${currentPage + 1}"><i class="ti ti-crown"></i><span>解锁全部</span></button>`
+      : `<button class="pg-arrow" data-pg="${currentPage + 1}" ${currentPage >= tp - 1 ? 'disabled' : ''}><span>下一页</span><i class="ti ti-chevron-right"></i></button>`;
+
     container.innerHTML = `
       <div class="pg-bar">
         <button class="pg-arrow" data-pg="${currentPage - 1}" ${currentPage === 0 ? 'disabled' : ''}>
           <i class="ti ti-chevron-left"></i><span>上一页</span>
         </button>
         <div class="pg-nums">${btnHtml}</div>
-        <button class="pg-arrow" data-pg="${currentPage + 1}" ${currentPage >= tp - 1 ? 'disabled' : ''}>
-          <span>下一页</span><i class="ti ti-chevron-right"></i>
-        </button>
+        ${nextBtnHtml}
         <span class="pg-info">第 ${currentPage + 1}/${tp} 页 · 共 ${total} 条</span>
         ${capped ? capHtml() : ''}
       </div>`;
@@ -190,7 +194,10 @@ export function initJobdb() {
     container.querySelectorAll('[data-pg]').forEach(btn => {
       btn.addEventListener('click', () => {
         const pg = +btn.dataset.pg;
-        if (isNaN(pg) || pg < 0 || pg >= tp || pg === currentPage) return;
+        if (isNaN(pg)) return;
+        // 免费用户点击"解锁全部"想越过前 5 页上限 → 弹付费/注册引导，不加载空页
+        if (capped && !Auth.isMember() && pg >= tp) { handleCapPaywall(); return; }
+        if (pg < 0 || pg >= tp || pg === currentPage) return;
         currentPage = pg;
         if (scroller) scroller.scrollTop = 0;
         loadPage();
@@ -200,6 +207,17 @@ export function initJobdb() {
 
   function capHtml() {
     return `<button class="btn sm primary pg-cap" data-goto="pricing"><i class="ti ti-crown"></i>升级查看全部</button>`;
+  }
+
+  /* 免费用户触达翻页上限：登录非会员弹升级，未登录引导注册（复用现成弹窗） */
+  function handleCapPaywall() {
+    if (Auth.isLoggedIn()) {
+      Auth.requireMember('jobdb');
+    } else if (window.openAuthModal) {
+      window.openAuthModal('register');
+    } else {
+      document.getElementById('auth-modal').style.display = 'flex';
+    }
   }
 
   /* ── 渲染 ── */
@@ -300,10 +318,16 @@ export function initJobdb() {
     render();
     try {
       const res = await JobStore.search({ ...filters, page: currentPage, size: PAGE_SIZE });
-      items      = res.content || [];
-      total      = res.total || 0;
-      totalPages = res.totalPages || 0;
-      capped     = !!res.capped;
+      // 兜底：免费用户仍返回空页（第 6 页及以上）→ 回退到最后一页并弹付费/注册引导
+      if (res.capped && !Auth.isMember() && res.content.length === 0 && currentPage >= (res.totalPages || 5)) {
+        currentPage = Math.max(0, (res.totalPages || 5) - 1);
+        handleCapPaywall();
+      } else {
+        items      = res.content || [];
+        total      = res.total || 0;
+        totalPages = res.totalPages || 0;
+        capped     = !!res.capped;
+      }
     } catch (e) {
       console.warn('[jobdb] 拉取失败：', e.message);
       showToast('加载失败，请重试');

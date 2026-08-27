@@ -2,8 +2,8 @@ package com.jobradar.controller;
 
 import com.jobradar.dto.JobPageDTO;
 import com.jobradar.dto.JobSyncReq;
-import com.jobradar.security.UserContext;
 import com.jobradar.service.JobService;
+import com.jobradar.service.MembershipService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +22,14 @@ import java.util.Map;
 public class JobController {
 
     private final JobService service;
+    private final MembershipService membershipService;
     private final String syncToken;
 
     public JobController(JobService service,
+                         MembershipService membershipService,
                          @Value("${jobradar.sync-token:changeme}") String syncToken) {
         this.service = service;
+        this.membershipService = membershipService;
         this.syncToken = syncToken;
     }
 
@@ -45,8 +48,8 @@ public class JobController {
             @RequestParam(defaultValue = "false") boolean foreign,
             @RequestParam(required = false) String target,
             @RequestParam(required = false) String updatedAt) {
-        // 登录用户无限浏览，未登录限前5页
-        boolean unlimited = (UserContext.get() != null);
+        // 会员无限浏览；非会员（含登录的免费用户）仅放行前 5 页
+        boolean unlimited = membershipService.isCurrentUserMember();
         return service.search(q, recruitType, industry, city, target, apply, urgent, soe, inst, foreign, updatedAt, page, size, unlimited);
     }
 
