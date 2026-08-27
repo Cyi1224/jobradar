@@ -48,8 +48,10 @@ jobradar:
       test-amount: ""            # 生产必须为空：覆盖 application.yml 的本地 0.01，走真实价格
   # 生产必须通过环境变量 JOBRADAR_SYNC_TOKEN 设置强随机串（≥32 字符）
   sync-token: ${JOBRADAR_SYNC_TOKEN:please-set-JOBRADAR_SYNC_TOKEN-in-production}
-  # 管理后台 API Key：生产必须通过环境变量 ADMIN_API_KEY 设置
+  # 管理后台：登录账号/密码（环境变量 ADMIN_ACCOUNT / ADMIN_PASSWORD）+ API Key（环境变量 ADMIN_API_KEY）
   admin:
+    account: ${ADMIN_ACCOUNT:2426155413}
+    password: ${ADMIN_PASSWORD:123456}
     api-key: ${ADMIN_API_KEY:}
 
 # ── offerbiu 校招数据每日同步（生产开启）──

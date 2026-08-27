@@ -209,7 +209,7 @@ tr:hover td{ background:var(--brand-light); }
       <option value="90">最近 90 天</option>
     </select>
     <button onclick="refreshAll()" title="刷新数据">🔄 刷新</button>
-    <button onclick="logout()" title="切换 API Key">🔑 切换密钥</button>
+    <button onclick="logout()" title="退出管理员登录">🚪 退出登录</button>
   </div>
 </nav>
 
@@ -401,7 +401,7 @@ async function apiGet(path) {
   return res.json();
 }
 
-// ── 认证对话框 ──
+// ── 认证对话框：管理员账号密码登录 ──
 function showAuthDialog(error) {
   const existing = document.querySelector('.auth-overlay');
   if (existing) existing.remove();
@@ -410,39 +410,51 @@ function showAuthDialog(error) {
   overlay.className = 'auth-overlay';
   overlay.innerHTML = `
     <div class="auth-dialog">
-      <h2>🔐 输入管理密钥</h2>
-      <p>请输入 Admin API Key 以访问数据看板</p>
-      <input type="password" id="authKeyInput" placeholder="粘贴 API Key…" autofocus>
-      <button id="authSubmit">验证并进入</button>
+      <h2>🔐 管理员登录</h2>
+      <p>请输入管理员账号和密码以访问数据看板</p>
+      <input type="text" id="authAccount" placeholder="管理员账号" autofocus autocomplete="username">
+      <input type="password" id="authPassword" placeholder="密码" autocomplete="current-password">
+      <button id="authSubmit">登录并进入</button>
       <div class="auth-error" id="authError">${error || ''}</div>
-      <div class="auth-hint">Key 存储在浏览器本地，仅用于本次访问</div>
     </div>
   `;
   document.body.appendChild(overlay);
 
-  const input = document.getElementById('authKeyInput');
+  const accEl = document.getElementById('authAccount');
+  const pwdEl = document.getElementById('authPassword');
   const btn = document.getElementById('authSubmit');
   const errEl = document.getElementById('authError');
 
   async function submit() {
-    const key = input.value.trim();
-    if (!key) { errEl.textContent = '请输入 API Key'; return; }
-    setApiKey(key);
+    const account = accEl.value.trim();
+    const password = pwdEl.value;
+    if (!account || !password) { errEl.textContent = '请输入账号和密码'; return; }
     btn.disabled = true;
     btn.textContent = '验证中…';
     try {
-      await apiGet('/api/admin/analytics/summary');
+      const res = await fetch(API_BASE + '/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.code !== 1) {
+        errEl.textContent = '❌ ' + (data.msg || '登录失败，请重试');
+        btn.disabled = false;
+        btn.textContent = '登录并进入';
+        return;
+      }
+      setApiKey(data.key);   // 用返回的 Admin Key 作为后续请求凭证
       overlay.remove();
       refreshAll();
     } catch (e) {
-      clearApiKey();
-      errEl.textContent = e.message === 'UNAUTHORIZED' ? '❌ API Key 无效，请检查后重试' : '❌ 连接失败：' + e.message;
+      errEl.textContent = '❌ 连接失败：' + e.message;
       btn.disabled = false;
-      btn.textContent = '验证并进入';
+      btn.textContent = '登录并进入';
     }
   }
   btn.addEventListener('click', submit);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  pwdEl.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
 }
 
 // ── 登出 ──

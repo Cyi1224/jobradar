@@ -33,6 +33,11 @@ public class AdminApiKeyFilter extends OncePerRequestFilter {
             chain.doFilter(req, res);
             return;
         }
+        // 管理员登录接口放行：凭账号+密码换取 Admin Key，无需预置 Key
+        if (req.getRequestURI().equals("/api/admin/login")) {
+            chain.doFilter(req, res);
+            return;
+        }
 
         String key = req.getHeader("X-Admin-Key");
         if (adminApiKey == null || adminApiKey.isBlank() || !adminApiKey.equals(key)) {

@@ -32,7 +32,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private LimitConfig limitFor(String path) {
         if (path.startsWith("/api/payment/notify"))  // zpay 回调：不参与 IP 限流
             return null;
-        if (path.startsWith("/api/auth/"))
+        if (path.startsWith("/api/auth/") || path.startsWith("/api/admin/login"))
             return new LimitConfig("auth", 30, WINDOW_AUTH);
         if (path.startsWith("/api/membership/subscribe"))
             return new LimitConfig("sub", 10, WINDOW_AUTH);

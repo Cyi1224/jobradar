@@ -36,6 +36,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-strong-32byte-random-secret-string}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8123,http://localhost:8080}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-change-me-to-a-strong-admin-key}
+      ADMIN_ACCOUNT: ${ADMIN_ACCOUNT:-2426155413}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-123456}
       OFFERBIU_SYNC_MAXPAGES: 10
       # JVM heap: 384MB — SQL 聚合后不再需要大堆，留内存给 OS/MySQL
       JAVA_TOOL_OPTIONS: "-Xmx384m -Xms128m"
