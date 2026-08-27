@@ -360,6 +360,20 @@ tr:hover td{ background:var(--brand-light); }
     <div class="pagination" id="userPagination"></div>
   </div>
 
+  <!-- 会员账户列表 -->
+  <div class="chart-card" style="margin-bottom:28px">
+    <h3>💳 会员账户列表 <span style="font-weight:400;font-size:13px;color:var(--c-text-3)" id="memberTotal"></span></h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>账号</th><th>昵称</th><th>注册时间</th><th>会员到期</th><th>剩余天数</th><th>状态</th></tr>
+        </thead>
+        <tbody id="memberTable"><tr class="loading-row"><td colspan="7">加载中…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="memberPagination"></div>
+  </div>
+
 </div>
 
 <script>
@@ -518,6 +532,7 @@ async function refreshAll() {
     renderFunnel(funnelData);
     renderActiveUsers(activeUsersData);
     await loadUsers(0);
+    await loadMembers(0);
 
     const now = new Date();
     document.getElementById('lastUpdate').textContent =
@@ -1227,6 +1242,76 @@ function renderPagination(totalPages) {
 
   html += `<button onclick="loadUsers(${userPage + 1})" ${userPage >= totalPages - 1 ? 'disabled' : ''}>»</button>`;
   html += `<button onclick="loadUsers(${totalPages - 1})" ${userPage >= totalPages - 1 ? 'disabled' : ''}>»»</button>`;
+  html += `<span class="page-info">共 ${totalPages} 页</span>`;
+  pg.innerHTML = html;
+}
+
+// ── 会员账户列表（分页） ──
+let memberPage = 0;
+const MEMBER_PAGE_SIZE = 15;
+
+async function loadMembers(page) {
+  memberPage = page;
+  try {
+    const data = await apiGet(`/api/admin/analytics/members-list?page=${page}&size=${MEMBER_PAGE_SIZE}`);
+    renderMembersTable(data);
+  } catch (e) {
+    document.getElementById('memberTable').innerHTML =
+      '<tr class="loading-row"><td colspan="7">加载失败：' + esc(e.message) + '</td></tr>';
+  }
+}
+
+function renderMembersTable(data) {
+  const tbody = document.getElementById('memberTable');
+  const members = data.members || [];
+  const total = data.total || 0;
+  const totalPages = data.totalPages || 0;
+
+  document.getElementById('memberTotal').textContent =
+    `（共 ${total} 人开通过会员）`;
+
+  if (!members.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7">暂无会员</td></tr>';
+    document.getElementById('memberPagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = members.map(u => {
+    const active = u.status === '有效';
+    const createdAt = (u.createdAt || '').replace('T', ' ').substring(0, 16);
+    const memberUntil = u.memberUntil ? u.memberUntil.replace('T', ' ').substring(0, 16) : '-';
+    const daysLeft = (active && u.daysLeft != null) ? u.daysLeft + ' 天' : '-';
+    return `
+    <tr>
+      <td>${u.id}</td>
+      <td>${esc(u.account)}</td>
+      <td>${esc(u.displayName || '-')}</td>
+      <td>${createdAt}</td>
+      <td style="font-size:12px;color:var(--c-text-2)">${memberUntil}</td>
+      <td style="font-size:12px;color:var(--c-text-2)">${daysLeft}</td>
+      <td><span class="badge ${active ? 'member' : 'free'}">${u.status}</span></td>
+    </tr>`;
+  }).join('');
+
+  renderMemberPagination(totalPages);
+}
+
+function renderMemberPagination(totalPages) {
+  const pg = document.getElementById('memberPagination');
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button onclick="loadMembers(0)" ${memberPage === 0 ? 'disabled' : ''}>««</button>`;
+  html += `<button onclick="loadMembers(${memberPage - 1})" ${memberPage === 0 ? 'disabled' : ''}>«</button>`;
+
+  const start = Math.max(0, memberPage - 2);
+  const end = Math.min(totalPages, memberPage + 3);
+  for (let i = start; i < end; i++) {
+    html += `<button onclick="loadMembers(${i})" class="${i === memberPage ? 'active' : ''}">${i + 1}</button>`;
+  }
+
+  html += `<button onclick="loadMembers(${memberPage + 1})" ${memberPage >= totalPages - 1 ? 'disabled' : ''}>»</button>`;
+  html += `<button onclick="loadMembers(${totalPages - 1})" ${memberPage >= totalPages - 1 ? 'disabled' : ''}>»»</button>`;
   html += `<span class="page-info">共 ${totalPages} 页</span>`;
   pg.innerHTML = html;
 }

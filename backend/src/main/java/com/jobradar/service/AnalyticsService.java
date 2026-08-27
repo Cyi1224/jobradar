@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -324,6 +325,39 @@ public class AnalyticsService {
         result.put("activeMembers", activeMembers);
         result.put("freeUsers", freeUsers);
         result.put("conversionRate", conversionRate);
+        return result;
+    }
+
+    // ═══════════════════════ 会员账户列表 ═══════════════════════
+
+    /** 所有开通过会员的用户（含已过期），按到期时间倒序，带剩余天数与状态 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> memberUsers(int page, int size) {
+        var pageResult = userRepo.findByMemberUntilIsNotNullOrderByMemberUntilDesc(
+                PageRequest.of(page, size));
+
+        LocalDateTime now = LocalDateTime.now();
+        List<Map<String, Object>> list = pageResult.getContent().stream().map(u -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", u.getId());
+            m.put("account", u.getAccount());
+            m.put("displayName", u.getDisplayName());
+            m.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : null);
+            m.put("memberUntil", u.getMemberUntil() != null ? u.getMemberUntil().toString() : null);
+            boolean active = u.getMemberUntil() != null && u.getMemberUntil().isAfter(now);
+            long daysLeft = u.getMemberUntil() != null
+                    ? Duration.between(now, u.getMemberUntil()).toDays() : 0;
+            m.put("daysLeft", daysLeft);
+            m.put("status", active ? "有效" : "已过期");
+            return m;
+        }).collect(Collectors.toList());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("members", list);
+        result.put("total", pageResult.getTotalElements());
+        result.put("page", page);
+        result.put("size", size);
+        result.put("totalPages", pageResult.getTotalPages());
         return result;
     }
 

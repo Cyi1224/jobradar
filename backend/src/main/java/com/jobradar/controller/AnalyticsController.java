@@ -95,6 +95,13 @@ public class AnalyticsController {
         return analyticsService.activeUsers(Math.min(days, 90), Math.min(limit, 100));
     }
 
+    /** 会员账户列表：所有开通过会员的用户 + 到期时间（含已过期） */
+    @GetMapping("/members-list")
+    public Map<String, Object> memberUsers(@RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "15") int size) {
+        return analyticsService.memberUsers(Math.max(page, 0), Math.min(size, 100));
+    }
+
     /** 同步历史 */
     @GetMapping("/sync-history")
     public Map<String, Object> syncHistory(@RequestParam(defaultValue = "30") int days) {
