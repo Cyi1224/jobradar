@@ -504,7 +504,7 @@ export function initResumeEditor() {
           <div style="flex:1;overflow:auto;background:var(--c-bg-2);padding:20px;display:flex;justify-content:center">${preview.outerHTML}</div>
           <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid var(--c-border);background:var(--c-bg-1)">
             <button class="pv-upgrade" style="background:linear-gradient(135deg,#2563EB,#1A56DB);color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.3)">💎 立即开通会员</button>
-            <span style="font-size:12px;color:var(--c-text-2)">保存并导出 PDF · 1 个月仅 ¥9.9 · 终身买断 ¥99</span>
+            <span style="font-size:12px;color:var(--c-text-2)">保存并导出 PDF · 1 个月仅 ¥9.9 · 终身买断 ¥88</span>
           </div>
         </div>`;
       document.body.appendChild(ov);

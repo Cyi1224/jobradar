@@ -16,7 +16,7 @@ export function initPricing() {
   async function render() {
     let st = { member: false, plan: '免费版', daysLeft: 0 };
     try { st = await Membership.status(); } catch { /* 匿名/未登录：按免费版展示 */ }
-    // 终身买断折算月单价，做价格锚定（99 / 12 ≈ 8.3）
+    // 终身买断折算月单价，做价格锚定（88 / 12 ≈ 7.3）
     const buyoutPerMonth = (PLANS.find((p) => p.buyout)?.price / 12).toFixed(1);
 
     el.innerHTML = `

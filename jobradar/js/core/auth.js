@@ -104,7 +104,7 @@ function showUpgradeModal(opts) {
     <div style="position:relative;background:#fff;border-radius:16px;padding:32px 28px;max-width:340px;width:90%;box-shadow:0 18px 40px -12px rgba(15,23,41,.3);text-align:center">
       <div style="font-size:40px;margin-bottom:10px">${opts.icon || '💎'}</div>
       <div style="font-size:17px;font-weight:700;margin-bottom:6px">${opts.title || '今日免费投递次数已用完'}</div>
-      <div style="font-size:13px;color:var(--c-text-2);margin-bottom:10px;line-height:1.6">${opts.desc || '开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99'}</div>
+      <div style="font-size:13px;color:var(--c-text-2);margin-bottom:10px;line-height:1.6">${opts.desc || '开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥88'}</div>
       ${opts.warn ? `<div style="font-size:12px;color:#B45309;background:#FEF3C7;border-radius:8px;padding:8px 12px;margin-bottom:16px;line-height:1.5">${opts.warn}</div>` : ''}
       <button class="btn primary" id="upgrade-go" style="width:100%;padding:11px;border:none;border-radius:8px;background:var(--brand-grad);color:#fff;font-size:14px;font-weight:600;cursor:pointer">${opts.btnText || '立即开通会员'}</button>
       <button id="upgrade-cancel" style="width:100%;padding:9px;margin-top:8px;background:none;border:none;color:var(--c-text-3);font-size:13px;cursor:pointer">暂不开通，稍后再看</button>
@@ -146,19 +146,19 @@ export const Auth = window.Auth = {
     if (Auth.isMember()) return true;
     var desc, warn;
     if (feature === 'resume') {
-      desc = '开通会员即可<b>无限次</b>使用简历编辑器、导出 PDF、AI 简历解析<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      desc = '开通会员即可<b>无限次</b>使用简历编辑器、导出 PDF、AI 简历解析<br>1 个月仅 ¥9.9，终身买断 ¥88';
       warn = '💡 免费用户可预览简历编辑器，保存与导出需开通会员';
     } else if (feature === 'applications') {
-      desc = '开通会员即可<b>无限次</b>管理投递进度、批量更新状态、投递复盘分析<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      desc = '开通会员即可<b>无限次</b>管理投递进度、批量更新状态、投递复盘分析<br>1 个月仅 ¥9.9，终身买断 ¥88';
       warn = '💡 免费用户可查看投递列表，操作与编辑需开通会员';
     } else if (feature === 'addjob') {
-      desc = '开通会员即可<b>无限次</b>手动添加岗位、管理投递记录<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      desc = '开通会员即可<b>无限次</b>手动添加岗位、管理投递记录<br>1 个月仅 ¥9.9，终身买断 ¥88';
       warn = '💡 免费用户可查看添加表单，保存岗位需开通会员';
     } else if (feature === 'jobdb') {
-      desc = '开通会员即可<b>无限翻页</b>，解锁全部校招岗位与投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      desc = '开通会员即可<b>无限翻页</b>，解锁全部校招岗位与投递入口<br>1 个月仅 ¥9.9，终身买断 ¥88';
       warn = '💡 免费版仅开放前 5 页，升级后解锁剩余全部岗位，投递入口也不再限次';
     } else {
-      desc = '开通会员即可<b>无限次</b>使用该功能<br>1 个月仅 ¥9.9，终身买断 ¥99';
+      desc = '开通会员即可<b>无限次</b>使用该功能<br>1 个月仅 ¥9.9，终身买断 ¥88';
       warn = '';
     }
     showUpgradeModal({ title: '此功能仅会员可用', desc: desc, warn: warn });
@@ -209,7 +209,7 @@ export const Auth = window.Auth = {
     } else {
       showUpgradeModal({
         title: '今日免费投递次数已用完',
-        desc: '开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥99',
+        desc: '开通会员即可<b>无限次</b>查看投递入口<br>1 个月仅 ¥9.9，终身买断 ¥88',
         warn: '⚠️ 免费次数按<b>设备与 IP</b> 统计，用完即锁定，<b>更换账号或退出登录均无效</b>。请开通会员后畅享无限投递。',
       });
     }

@@ -35,7 +35,7 @@ public class PaymentController {
     private static final Map<String, Integer> PLAN_DAYS = Map.of(
             "month", 30, "quarter", 90, "half", 180, "forever", 36500);
     private static final Map<String, String> PLAN_PRICE = Map.of(
-            "month", "9.9", "quarter", "25.9", "half", "49.9", "forever", "99");
+            "month", "9.9", "quarter", "25.9", "half", "49.9", "forever", "88");
     private static final Map<String, String> PLAN_NAME = Map.of(
             "month", "1个月会员", "quarter", "3个月会员", "half", "6个月会员", "forever", "终身买断");
 

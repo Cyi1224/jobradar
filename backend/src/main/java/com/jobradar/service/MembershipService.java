@@ -25,7 +25,7 @@ public class MembershipService {
         this.userRepo = userRepo;
     }
 
-    /** 套餐 → 天数：月 9.9 / 季 25.9 / 半年 49.9 / 终身买断 99（元）。 */
+    /** 套餐 → 天数：月 9.9 / 季 25.9 / 半年 49.9 / 终身买断 88（元）。 */
     private int daysOf(String plan) {
         return switch (plan == null ? "" : plan) {
             case "month"   -> 30;
