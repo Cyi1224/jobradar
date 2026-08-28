@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -142,8 +143,12 @@ public class PaymentController {
         if ("PAID".equals(order.getStatus())) {
             return ResponseEntity.ok("success");   // 已处理过，直接确认
         }
-        // 4. 校验金额一致（防假通知）
-        if (!order.getAmount().equals(money)) {
+        // 4. 校验金额一致（防假通知）：数值比较，兼容 "9.9" 与 "9.90" 的位数差异
+        try {
+            if (new BigDecimal(order.getAmount()).compareTo(new BigDecimal(money)) != 0) {
+                return ResponseEntity.ok("fail");
+            }
+        } catch (NumberFormatException e) {
             return ResponseEntity.ok("fail");
         }
         // 5. 发货：开通会员
