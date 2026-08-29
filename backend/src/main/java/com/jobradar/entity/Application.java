@@ -19,7 +19,8 @@ public class Application {
     private Long userId;      // 所属用户（数据隔离）
 
     private String co;        // 公司
-    private String pos;       // 岗位
+    @Column(length = 2000)
+    private String pos;       // 岗位（可来自 job.positions，最长 2000）
 
     @Column(name = "job_type")
     private String type;      // 招聘类型（type 在部分数据库是保留字，列名改 job_type）

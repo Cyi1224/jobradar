@@ -43,8 +43,9 @@ public class ApplicationService {
     public ApplicationDTO create(CreateApplicationReq req) {
         Application a = new Application();
         a.setUserId(UserContext.require());
-        a.setCo(req.co());
-        a.setPos(req.pos());
+        // pos 可来自 job.positions（最长 2000），防御性截断防止数据库列溢出报 500
+        a.setCo(truncate(req.co(), 255));
+        a.setPos(truncate(req.pos(), 2000));
         a.setType(orDefault(req.type(), "秋招"));
         a.setCity(orDefault(req.city(), "—"));
         a.setDeadline(orDefault(req.deadline(), "招满为止"));
@@ -111,5 +112,10 @@ public class ApplicationService {
 
     private static String orDefault(String v, String def) {
         return (v == null || v.isBlank()) ? def : v;
+    }
+
+    /** 截断超长字段，防止数据库列溢出（co/pos 可来自 job 表的长字段）。 */
+    private static String truncate(String s, int max) {
+        return (s == null || s.length() <= max) ? s : s.substring(0, max);
     }
 }
