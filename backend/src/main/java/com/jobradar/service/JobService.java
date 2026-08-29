@@ -42,12 +42,12 @@ public class JobService {
         Page<Job> p = repo.findAll(spec, PageRequest.of(Math.max(0, page), clampSize(size), sort));
 
         if (unlimited) {
-            return new JobPageDTO(p.getContent(), p.getTotalElements(), p.getNumber(), p.getSize(), p.getTotalPages(), false);
+            return new JobPageDTO(p.getContent(), p.getTotalElements(), p.getNumber(), p.getSize(), p.getTotalPages(), false, false);
         }
         boolean capped = p.getTotalPages() > FREE_MAX_PAGES;
         int allowedPages = Math.min(p.getTotalPages(), FREE_MAX_PAGES);
         List<Job> content = (p.getNumber() >= FREE_MAX_PAGES) ? List.of() : p.getContent();
-        return new JobPageDTO(content, p.getTotalElements(), p.getNumber(), p.getSize(), allowedPages, capped);
+        return new JobPageDTO(content, p.getTotalElements(), p.getNumber(), p.getSize(), allowedPages, capped, false);
     }
 
     private int clampSize(int size) {

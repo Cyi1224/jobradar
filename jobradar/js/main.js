@@ -20,6 +20,7 @@ import { initAutofill } from './views/autofill.js';
 import { initProfile } from './views/profile.js';
 import { initPricing } from './views/pricing.js';
 import { showToast } from './core/toast.js';
+import { emit, EVT } from './core/bus.js';
 
 /* ── 百度统计 — 仅线上生效 ── */
 if (CONFIG.BAIDU_TONGJI_ID && (location.hostname === 'jobradar.xin' || location.hostname.endsWith('.jobradar.xin'))) {
@@ -82,7 +83,7 @@ function renderAccount() {
   if (Auth.isLoggedIn()) {
     box.innerHTML = `<span class="nav-user-name">${Auth.getUser() || '已登录'}</span>
       <button class="nav-logout" id="nav-logout" title="退出登录"><i class="ti ti-logout"></i>退出</button>`;
-    box.querySelector('#nav-logout').addEventListener('click', () => Auth.logout());
+    box.querySelector('#nav-logout').addEventListener('click', () => { Auth.logout(); emit(EVT.AUTH_CHANGED); });
   } else {
     box.innerHTML = `<button class="nav-login" data-auth-open><i class="ti ti-login"></i>登录 / 注册</button>`;
   }
@@ -96,8 +97,13 @@ function guardAnonymousClicks() {
     if (e.target.closest('.nav')) return;                  // 导航栏：放行
     if (e.target.closest('[data-act="more"]')) return;     // 「加载更多」：放行
 
-    // 校招信息库：浏览、筛选、翻页全部放行
-    if (e.target.closest('#page-jobdb')) return;
+    // 校招信息库：未注册用户无免费额度，点击任意内容 → 弹登录
+    if (e.target.closest('#page-jobdb')) {
+      e.preventDefault();
+      e.stopPropagation();
+      openAuth();
+      return;
+    }
 
     // 其余（加投递、改状态等操作）→ 拦截并弹登录
     e.preventDefault();
@@ -250,6 +256,7 @@ function wireAuthModal() {
         closeAuth();
         renderAccount();
         removeRegPrompts();              // 移除注册引导/CTA
+        emit(EVT.AUTH_CHANGED);          // 解锁岗位库（重新拉取数据）
         showToast('欢迎回来，' + (Auth.getUser() || a));
       } else {
         // 注册：账号即昵称
@@ -258,6 +265,7 @@ function wireAuthModal() {
         closeAuth();
         renderAccount();
         removeRegPrompts();
+        emit(EVT.AUTH_CHANGED);
         showToast('注册成功！欢迎，' + a);
         showOnboarding();
       }

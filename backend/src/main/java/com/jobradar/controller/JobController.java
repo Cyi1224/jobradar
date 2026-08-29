@@ -2,6 +2,7 @@ package com.jobradar.controller;
 
 import com.jobradar.dto.JobPageDTO;
 import com.jobradar.dto.JobSyncReq;
+import com.jobradar.security.UserContext;
 import com.jobradar.service.JobService;
 import com.jobradar.service.MembershipService;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +49,10 @@ public class JobController {
             @RequestParam(defaultValue = "false") boolean foreign,
             @RequestParam(required = false) String target,
             @RequestParam(required = false) String updatedAt) {
+        // 未登录：不返回任何岗位数据（防匿名爬取），前端显示登录墙
+        if (UserContext.get() == null) {
+            return JobPageDTO.locked(page, size);
+        }
         // 会员无限浏览；非会员（含登录的免费用户）仅放行前 5 页
         boolean unlimited = membershipService.isCurrentUserMember();
         return service.search(q, recruitType, industry, city, target, apply, urgent, soe, inst, foreign, updatedAt, page, size, unlimited);

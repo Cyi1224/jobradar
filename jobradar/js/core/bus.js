@@ -6,6 +6,7 @@
  */
 export const EVT = {
   APPS_CHANGED: 'data:apps-changed',   // 投递数据发生增删改
+  AUTH_CHANGED: 'auth:changed',        // 登录/登出（岗位库等视图据此解锁/刷新）
 };
 
 export function emit(name, detail) {
