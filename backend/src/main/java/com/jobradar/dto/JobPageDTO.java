@@ -12,10 +12,5 @@ public record JobPageDTO(
         int size,
         int totalPages,
         boolean capped,  // 是否因免费上限被截断（前端据此提示升级）
-        boolean locked   // 未登录锁定：不返回任何岗位数据（前端显示登录墙）
-) {
-    /** 未登录访问：空内容 + locked 标记，防止匿名爬取岗位数据。 */
-    public static JobPageDTO locked(int page, int size) {
-        return new JobPageDTO(List.of(), 0, page, size, 0, false, true);
-    }
-}
+        boolean locked   // 匿名脱敏：返回骨架卡片，岗位/地点等核心字段已被遮罩
+) {}

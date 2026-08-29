@@ -49,13 +49,11 @@ public class JobController {
             @RequestParam(defaultValue = "false") boolean foreign,
             @RequestParam(required = false) String target,
             @RequestParam(required = false) String updatedAt) {
-        // 未登录：不返回任何岗位数据（防匿名爬取），前端显示登录墙
-        if (UserContext.get() == null) {
-            return JobPageDTO.locked(page, size);
-        }
+        // 匿名：返回遮罩骨架卡片（岗位/地点/链接隐藏），前端提示登录后查看
+        boolean anon = UserContext.get() == null;
         // 会员无限浏览；非会员（含登录的免费用户）仅放行前 5 页
-        boolean unlimited = membershipService.isCurrentUserMember();
-        return service.search(q, recruitType, industry, city, target, apply, urgent, soe, inst, foreign, updatedAt, page, size, unlimited);
+        boolean unlimited = anon ? false : membershipService.isCurrentUserMember();
+        return service.search(q, recruitType, industry, city, target, apply, urgent, soe, inst, foreign, updatedAt, page, size, unlimited, anon);
     }
 
     @GetMapping("/stats")

@@ -741,6 +741,13 @@ tr.row--expired td { opacity: .45; filter: grayscale(.7); }
 }
 .jc-pos > i { font-size: 15px; color: var(--brand); flex-shrink: 0; margin-top: 1px; }
 .jc-pos > span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+/* 未登录遮罩：岗位/地点「登录后查看」提示 */
+.jdb-mask {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: #6b7280; font-size: 13px; white-space: nowrap; cursor: pointer;
+  background: #eef0f3; border: 1px dashed #c3c9d1; border-radius: 6px; padding: 1px 8px;
+}
+.jdb-mask > i { font-size: 13px; color: var(--brand); }
 .jc-actions { display: flex; gap: 8px; margin-top: auto; }
 .jc-apply { flex: 1; justify-content: center; }
 .jc-add { flex: 1; justify-content: center; }

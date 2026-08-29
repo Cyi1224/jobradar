@@ -37,6 +37,8 @@ export function initJobdb() {
 
   /* ── 工具 ── */
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // 未登录：岗位/地点显示遮罩提示（点击由 main.js 统一拦截弹登录）
+  const maskHint = () => `<span class="jdb-mask"><i class="ti ti-lock"></i>登录后查看</span>`;
   const key = (co, pos) => `${co}__${pos}`;
   const isDate = (s) => /\d{4}-\d{1,2}-\d{1,2}/.test(s || '');
   const TODAY_MS = new Date(new Date().toDateString()).getTime();
@@ -57,6 +59,7 @@ export function initJobdb() {
 
   /* ── 卡片 / 表格 ── */
   function cardHtml(j) {
+    const anon = !Auth.isLoggedIn();
     const dc = deadlineCell(j.deadline);
     const added = addedKeys.has(key(j.co, j.positions));
     const isNew = j.updatedAt && j.updatedAt === todayDate;
@@ -76,10 +79,10 @@ export function initJobdb() {
         <div class="jc-co">${esc(j.co)}${isNew ? ' <span class="badge b-amber jobdb-new">NEW</span>' : ''}</div>
         <div class="jc-meta">
           <span class="badge ${JOB_BADGE.coType[j.coType] || 'b-gray'}">${esc(j.coType)}</span>
-          <span class="jc-city"><i class="ti ti-map-pin"></i>${esc(j.city)}</span>
+          <span class="jc-city">${anon ? maskHint() : `<i class="ti ti-map-pin"></i>${esc(j.city)}`}</span>
           ${j.industry ? `<span class="jc-industry">${esc(j.industry)}</span>` : ''}
         </div>
-        <div class="jc-pos"><i class="ti ti-briefcase"></i><span>${esc(j.positions)}</span></div>
+        <div class="jc-pos"><i class="ti ti-briefcase"></i>${anon ? maskHint() : `<span>${esc(j.positions)}</span>`}</div>
         <div class="jc-actions">
           ${j.applyUrl
             ? (Auth.isLoggedIn() && Auth.isMember()
@@ -93,6 +96,7 @@ export function initJobdb() {
       </div>`;
   }
   function rowHtml(j) {
+    const anon = !Auth.isLoggedIn();
     const added = addedKeys.has(key(j.co, j.positions));
     const dc = deadlineCell(j.deadline);
     const isNew = j.updatedAt && j.updatedAt === todayDate;
@@ -104,8 +108,8 @@ export function initJobdb() {
         <td>${esc(j.industry)}</td>
         <td><span class="badge ${JOB_BADGE.recruit[j.recruitType] || 'b-gray'}">${esc(j.recruitType)}</span></td>
         <td>${esc(j.target)}</td>
-        <td>${esc(j.city)}</td>
-        <td>${esc(j.positions)}</td>
+        <td>${anon ? maskHint() : esc(j.city)}</td>
+        <td>${anon ? maskHint() : esc(j.positions)}</td>
         <td class="${dc.urgent ? 'jdb-urgent' : ''}">${esc(dc.text)}</td>
         <td style="white-space:nowrap">
           ${j.applyUrl ? (Auth.isLoggedIn() && Auth.isMember()
@@ -220,35 +224,14 @@ export function initJobdb() {
     }
   }
 
-  /* 未登录：岗位数据区显示登录墙（页面壳/统计正常展示，点击任意内容由 main.js 拦截弹登录） */
-  function renderLock() {
-    if (countInfo) countInfo.textContent = '登录后查看全部岗位';
-    const lockHtml = `
-      <div class="jdb-lock" style="display:flex;align-items:center;justify-content:center;padding:48px 20px">
-        <div style="max-width:420px;width:100%;text-align:center;background:linear-gradient(135deg,#EEF2FF,#F0FDF4);border:1px solid #C7D2FE;border-radius:16px;padding:36px 28px">
-          <div style="font-size:44px;margin-bottom:12px"><i class="ti ti-lock-square-rounded"></i></div>
-          <div style="font-size:18px;font-weight:700;margin-bottom:6px">登录后查看全部校招岗位</div>
-          <div style="font-size:13px;color:var(--c-text-2);margin-bottom:18px">注册即享 5 页免费浏览 · 会员无限查看岗位、一键投递与管理进度</div>
-          <button class="btn primary" data-auth-open style="padding:10px 32px;font-size:14px;border-radius:8px"><i class="ti ti-login"></i>立即登录 / 注册</button>
-        </div>
-      </div>`;
-    cardsEl.style.display = view === 'card' ? '' : 'none';
-    tableEl.style.display = view === 'table' ? '' : 'none';
-    cardsEl.innerHTML = view === 'card' ? lockHtml : '';
-    if (tbody) tbody.innerHTML = view === 'table' ? `<tr><td colspan="9">${lockHtml}</td></tr>` : '';
-    renderPagination(topPager);
-    renderPagination(footer);
-  }
-
   /* ── 渲染 ── */
   function render() {
-    // 未登录：不渲染岗位数据，显示登录墙
-    if (!Auth.isLoggedIn()) { renderLock(); return; }
-
+    const anon = !Auth.isLoggedIn();
     const todayActive = !!filters.updatedAt;
-    countInfo.textContent = todayActive
-      ? `今日新增 ${total} 条招聘信息`
-      : `当前可查看 ${total} 条招聘信息`;
+    // 未登录：显示遮罩骨架卡片，岗位/地点为「登录后查看」提示
+    if (countInfo) countInfo.textContent = anon
+      ? '登录后查看岗位详情'
+      : (todayActive ? `今日新增 ${total} 条招聘信息` : `当前可查看 ${total} 条招聘信息`);
 
     if (!items.length) {
       const empty = `<div class="jdb-empty"><i class="ti ti-search-off"></i>${loading ? '加载中…' : '没有符合条件的岗位'}</div>`;
@@ -339,8 +322,6 @@ export function initJobdb() {
     if (loading) return;
     loading = true;
     render();
-    // 未登录：不请求数据（后端对匿名也只返回 locked 空数据），直接显示登录墙
-    if (!Auth.isLoggedIn()) { loading = false; renderLock(); return; }
     try {
       const res = await JobStore.search({ ...filters, page: currentPage, size: PAGE_SIZE });
       // 兜底：免费用户仍返回空页（第 6 页及以上）→ 回退到最后一页并弹付费/注册引导

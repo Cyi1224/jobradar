@@ -36,7 +36,7 @@ public class JobService {
      *  免费版仅放行前 FREE_MAX_PAGES 页；unlimited=true（会员）不限页。 */
     public JobPageDTO search(String q, String recruitType, String industry, String city,String target,
                              boolean apply, boolean urgent, boolean soe, boolean inst, boolean foreign,
-                             String updatedAt, int page, int size, boolean unlimited) {
+                             String updatedAt, int page, int size, boolean unlimited, boolean masked) {
         Specification<Job> spec = build(q, recruitType, industry, city, target, apply, urgent, soe, inst, foreign, updatedAt);
         Sort sort = Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.asc("id"));
         Page<Job> p = repo.findAll(spec, PageRequest.of(Math.max(0, page), clampSize(size), sort));
@@ -47,7 +47,28 @@ public class JobService {
         boolean capped = p.getTotalPages() > FREE_MAX_PAGES;
         int allowedPages = Math.min(p.getTotalPages(), FREE_MAX_PAGES);
         List<Job> content = (p.getNumber() >= FREE_MAX_PAGES) ? List.of() : p.getContent();
-        return new JobPageDTO(content, p.getTotalElements(), p.getNumber(), p.getSize(), allowedPages, capped, false);
+        // 匿名访问：岗位/地点/投递链接等核心字段遮罩，仅展示公司骨架卡片
+        if (masked) content = content.stream().map(this::maskForAnon).toList();
+        return new JobPageDTO(content, p.getTotalElements(), p.getNumber(), p.getSize(), allowedPages, capped, masked);
+    }
+
+    /** 匿名脱敏：保留公司骨架，遮住岗位/地点/链接/备注（前端显示「登录后查看」）。 */
+    private Job maskForAnon(Job j) {
+        Job m = new Job();
+        m.setId(j.getId());
+        m.setCo(j.getCo());
+        m.setCoType(j.getCoType());
+        m.setIndustry(j.getIndustry());
+        m.setRecruitType(j.getRecruitType());
+        m.setTarget(j.getTarget());
+        m.setCity("登录后可见");
+        m.setPositions("登录后可见");
+        m.setUpdatedAt(j.getUpdatedAt());
+        m.setDeadline(j.getDeadline());
+        m.setApplyUrl("");
+        m.setAnnounceUrl("");
+        m.setNote("");
+        return m;
     }
 
     private int clampSize(int size) {
