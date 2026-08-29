@@ -63,3 +63,13 @@ offerbiu:
     max-pages: 10              # 每个招聘季抓前 10 页（覆盖更多新增岗位）
     page-size: 100
     page-delay-ms: 200
+
+# ── offerqingbaoju 校招数据每日同步（生产开启，只取源站最新更新批次）──
+offerqingbaoju:
+  base-url: https://offerqingbaoju.cn
+  sync:
+    enabled: true
+    cron: "0 30 6,15 * * ?"    # 每天 6:30 和 15:30（与 offerbiu 错开半小时，避免同时压源站）
+    navigation-ids: 61         # 默认「27届秋招」，逗号分隔可配多个
+    page-size: 5000            # 源站第 2 页起需登录，靠大 per_page 一页匿名拉全当前全量（约 2k 条）
+    page-delay-ms: 300

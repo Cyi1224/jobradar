@@ -170,6 +170,50 @@ offerbiu:
 
 ---
 
+## 6.5 offerqingbaoju 校招数据每日同步（第二数据源）
+
+> 只同步源站**最新一次更新**的批次，透传源站更新时间，与 offerbiu 一起经业务主键去重入库。
+
+### 同步机制
+- **触发**: 每天 6:30 / 15:30 (cron: `0 30 6,15 * * ?`) + 应用启动 30 秒后首次同步 + 手动触发
+- **数据源**: `GET https://offerqingbaoju.cn/api/simple/navigation/{id}/data`（公开接口，无需登录）
+- **导航**: `navigation-ids` 配置（默认 61=27届秋招），站点已内置筛选
+- **重要**: 源站第 2 页起需登录，靠大 `page-size: 5000` 一页匿名拉全当前全量（约 2k 条）；若数据超一页会在日志告警
+- **只取最新批次**: 归一化源站「更新时间」后取最大日期，仅保留该批（避免误把斜杠格式旧日期当最新）
+- **updatedAt**: 透传源站「更新时间」YYYY-MM-DD（非同步当天）
+- **去重**: 复用 `JobService.insertNewJobs` 业务主键 `(co, positions, recruitType, city, deadline)`，与 offerbiu/种子数据共享
+- **手动触发**: `POST /api/admin/analytics/sync-offerqingbaoju` + X-Admin-Key
+
+### 数据映射 (offerqingbaoju → JobRadar)
+| offerqingbaoju | JobRadar Job | 转换 |
+|----------|-------------|------|
+| 企业名称 | co | 直接 |
+| 企业性质 | coType | 直接 |
+| 行业 | industry | 直接 |
+| 招聘批次 | recruitType | 直接（秋招/春招） |
+| 毕业年份 | target | 逗号分割，4 位年份拼「届」→ "2027届" / "2026届,2027届" |
+| 工作地点 | city | 直接 |
+| 职位 | positions | 截断 2000 字符 |
+| 更新时间 | updatedAt | 归一化 YYYY-MM-DD 透传 |
+| 截止时间 | deadline | 直接（ISO 日期或「招满为止」） |
+| 投递地址 | applyUrl | 直接（个别行空，如实透传） |
+| 公告链接 | announceUrl | 直接 |
+| 学历要求 | note | 截断 500 字符 |
+
+### 配置 (application-prod.yml)
+```yaml
+offerqingbaoju:
+  base-url: https://offerqingbaoju.cn
+  sync:
+    enabled: true
+    cron: "0 30 6,15 * * ?"    # 与 offerbiu 错开半小时
+    navigation-ids: 61
+    page-size: 5000            # 一页匿名拉全（第 2 页起需登录）
+    page-delay-ms: 300
+```
+
+---
+
 ## 7. 部署
 
 ### 服务器信息

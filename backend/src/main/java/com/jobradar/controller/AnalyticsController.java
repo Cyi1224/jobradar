@@ -2,6 +2,7 @@ package com.jobradar.controller;
 
 import com.jobradar.service.AnalyticsService;
 import com.jobradar.service.OfferbiuSyncService;
+import com.jobradar.service.OfferqingbaojuSyncService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,11 +15,14 @@ public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
     private final OfferbiuSyncService offerbiuSyncService;
+    private final OfferqingbaojuSyncService offerqingbaojuSyncService;
 
     public AnalyticsController(AnalyticsService analyticsService,
-                               OfferbiuSyncService offerbiuSyncService) {
+                               OfferbiuSyncService offerbiuSyncService,
+                               OfferqingbaojuSyncService offerqingbaojuSyncService) {
         this.analyticsService = analyticsService;
         this.offerbiuSyncService = offerbiuSyncService;
+        this.offerqingbaojuSyncService = offerqingbaojuSyncService;
     }
 
     /** 汇总卡片数据 */
@@ -129,6 +133,19 @@ public class AnalyticsController {
     @PostMapping("/sync-offerbiu")
     public ResponseEntity<Map<String, Object>> syncOfferbiu() {
         OfferbiuSyncService.SyncResult result = offerbiuSyncService.syncNow();
+        return ResponseEntity.ok(Map.of(
+                "status", "ok",
+                "fetched", result.fetched(),
+                "inserted", result.inserted(),
+                "skipped", result.skipped(),
+                "durationSeconds", result.durationSeconds()
+        ));
+    }
+
+    /** 手动触发 offerqingbaoju 数据同步（需 X-Admin-Key） */
+    @PostMapping("/sync-offerqingbaoju")
+    public ResponseEntity<Map<String, Object>> syncOfferqingbaoju() {
+        OfferqingbaojuSyncService.SyncResult result = offerqingbaojuSyncService.syncNow();
         return ResponseEntity.ok(Map.of(
                 "status", "ok",
                 "fetched", result.fetched(),
