@@ -67,7 +67,7 @@ body{
 
 /* ── 统计卡片网格 ── */
 .stat-grid{
-  display:grid; grid-template-columns:repeat(6, 1fr); gap:20px; margin-bottom:28px;
+  display:grid; grid-template-columns:repeat(7, 1fr); gap:20px; margin-bottom:28px;
 }
 .stat-card{
   background:var(--c-bg-0); border-radius:var(--radius-lg); padding:22px 24px;
@@ -85,6 +85,7 @@ body{
 .stat-icon.amber{ background:#FFFBEB; color:var(--amber); }
 .stat-icon.red{ background:#FEF2F2; color:#EF4444; }
 .stat-icon.indigo{ background:#EEF2FF; color:#6366F1; }
+.stat-icon.pink{ background:#FDF2F8; color:#EC4899; }
 .stat-body .stat-label{ font-size:13px; color:var(--c-text-2); margin-bottom:2px; }
 .stat-body .stat-value{ font-family:var(--font-display); font-size:28px; font-weight:700; letter-spacing:-0.01em; }
 .stat-body .stat-sub{ font-size:12px; color:var(--c-text-3); margin-top:2px; }
@@ -215,8 +216,16 @@ tr:hover td{ background:var(--brand-light); }
 
 <div class="container">
 
-  <!-- 统计卡片：6 张 -->
+  <!-- 统计卡片：7 张 -->
   <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon pink">🎉</div>
+      <div class="stat-body">
+        <div class="stat-label">今日新增会员</div>
+        <div class="stat-value" id="sNewMembers">-</div>
+        <div class="stat-sub" id="sNewMembersSub">今日新开会员人数</div>
+      </div>
+    </div>
     <div class="stat-card">
       <div class="stat-icon blue">📊</div>
       <div class="stat-body">
@@ -556,6 +565,7 @@ function renderSummary(s, jobs, members) {
   document.getElementById('sUsers').textContent = fmt(s.totalUsers);
   document.getElementById('sOpenJobs').textContent = fmt(jobs.openJobs);
   document.getElementById('sMembers').textContent = fmt(members.activeMembers);
+  document.getElementById('sNewMembers').textContent = fmt(s.newMembersToday || 0);
 
   document.getElementById('sTodaySub').textContent =
     s.activeUsers7d ? '7 日活跃 ' + s.activeUsers7d + ' 人' : '';

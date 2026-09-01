@@ -17,6 +17,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     List<User> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
+    /** 今日新增会员数：member_since 落在 [start, end) 内的用户（首次开通会员时间） */
+    long countByMemberSinceBetween(LocalDateTime start, LocalDateTime end);
+
     /** 开通过会员的用户，按开通时间倒序（member_since 为空回退注册时间），含已过期 */
     @Query("SELECT u FROM User u WHERE u.memberUntil IS NOT NULL ORDER BY COALESCE(u.memberSince, u.createdAt) DESC")
     Page<User> findMemberUsersByPaidTime(Pageable pageable);

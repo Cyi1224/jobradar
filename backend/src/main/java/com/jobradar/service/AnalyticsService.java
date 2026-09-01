@@ -51,6 +51,7 @@ public class AnalyticsService {
                 LocalDate.now().minusDays(30).atStartOfDay(), now));
         result.put("totalUsers", userRepo.count());
         result.put("newUsersToday", userRepo.countByCreatedAtBetween(todayStart, now));
+        result.put("newMembersToday", userRepo.countByMemberSinceBetween(todayStart, now));
         result.put("activeUsers7d", visitLogRepo.countDistinctUserIdByCreatedAtBetween(
                 LocalDate.now().minusDays(7).atStartOfDay(), now));
         return result;
