@@ -8,6 +8,7 @@ import com.jobradar.service.ZpayClient;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -90,6 +91,7 @@ public class PaymentController {
 
     /** 查询订单支付状态（前端轮询用）：已支付则自动发货开通会员。 */
     @GetMapping("/order-status")
+    @Transactional
     public Map<String, Object> orderStatus(@RequestParam String orderNo) {
         Long uid = UserContext.require();
         Order order = orderRepo.findByOrderNo(orderNo).orElse(null);
@@ -104,11 +106,11 @@ public class PaymentController {
         Object status = q.get("status");
         if (q.get("code") != null && ("1".equals(String.valueOf(q.get("code"))) || q.get("code") instanceof Number n && n.intValue() == 1)
                 && "1".equals(String.valueOf(status))) {
-            order.setStatus("PAID");
-            order.setTradeNo(String.valueOf(q.getOrDefault("trade_no", "")));
-            order.setPaidAt(LocalDateTime.now());
-            orderRepo.save(order);
-            membershipService.grantByOrder(order.getUserId(), order.getPlan());
+            // 原子抢占（PENDING→PAID）：仅抢占成功的请求开通会员，防与 notify 回调并发双开通
+            if (orderRepo.claimOrderPaid(order.getId(),
+                    String.valueOf(q.getOrDefault("trade_no", "")), LocalDateTime.now()) == 1) {
+                membershipService.grantByOrder(order.getUserId(), order.getPlan());
+            }
             return Map.of("paid", true, "member", true);
         }
         return Map.of("paid", false);
@@ -116,6 +118,7 @@ public class PaymentController {
 
     /** zpay 异步回调（GET，form 参数）。返回纯字符串 "success"。 */
     @GetMapping("/notify")
+    @Transactional
     public ResponseEntity<String> notify(HttpServletRequest req) {
         // 收集参数（去掉空值）
         Map<String, String> params = new HashMap<>();
@@ -151,12 +154,10 @@ public class PaymentController {
         } catch (NumberFormatException e) {
             return ResponseEntity.ok("fail");
         }
-        // 5. 发货：开通会员
-        order.setStatus("PAID");
-        order.setTradeNo(tradeNo);
-        order.setPaidAt(LocalDateTime.now());
-        orderRepo.save(order);
-        membershipService.grantByOrder(order.getUserId(), order.getPlan());
+        // 5. 原子抢占（PENDING→PAID）：仅抢占成功的请求开通会员，防与 order-status 轮询并发双开通
+        if (orderRepo.claimOrderPaid(order.getId(), tradeNo, LocalDateTime.now()) == 1) {
+            membershipService.grantByOrder(order.getUserId(), order.getPlan());
+        }
         return ResponseEntity.ok("success");
     }
 
